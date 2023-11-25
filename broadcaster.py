@@ -1,14 +1,14 @@
 class Broadcaster:
     
-    username: str
-    id: str
+    twitch_login: str
+    twitch_id: str
     steam_id: int
     redeem_ids: dict
     referral: str
     
-    def __init__(self,id:str, username:str, steam_id:int, redeem_ids:dict, referral:str) -> None:
-        self.id = id
-        self.username = username
+    def __init__(self,twitch_id:str, twitch_login:str, steam_id:int, redeem_ids:dict, referral:str) -> None:
+        self.twitch_id = twitch_id
+        self.twitch_login = twitch_login
         self.steam_id = steam_id
         self.redeem_ids = redeem_ids
         self.referral = referral
@@ -17,8 +17,8 @@ class Broadcaster:
     def to_dict(self):
         return {
             'Referral': self.referral,
-            'Id': self.id,
-            'Username': self.username,
+            'TwitchId': self.twitch_id,
+            'TwitchLogin': self.twitch_login,
             'SteamId': self.steam_id,
             'RedeemIds': self.redeem_ids
         }

@@ -2,7 +2,6 @@ import os
 import sys
 import threading
 import time
-sys.path.append('G:/VS_repos/BBR_Twitch_Integrations/TwitchEventsToJSON/python')
 from events import *
 from logger import Logger
 import asyncio
@@ -232,9 +231,11 @@ class Bot:
         # Convert dictionaries back to Password objects
         self.passwords = [Password(p['referral'], p['salt'], p['valid_hash']) for p in password_dicts]
 
-    async def find_caster(self, caster_id:str):
+    async def find_caster(self, caster_id:str = None, caster_name:str = None):
         for caster in self.broadcasters:
             if caster_id == caster.id:
+                return caster
+            if caster_name == caster.username:
                 return caster
         return None
         
@@ -242,12 +243,12 @@ class Bot:
     async def register_broadcaster(self, caster_id:str):
         caster = await self.find_caster(caster_id)
         d = caster.to_dict()
-        d.update({'EventType':'BroadcasterAdd'})
+        d.update({'EventType':'AddBroadcaster'})
         return await self.REST_post(d)
     
     async def unregister_broadcaster(self, caster : Broadcaster):
         d = caster.to_dict()
-        d.update({'EventType':'BroadcasterRemove'})
+        d.update({'EventType':'RemoveBroadcaster'})
         return await self.REST_post(d)
             
     async def REST_post(self, data:dict):
@@ -332,64 +333,64 @@ class Bot:
         await self.esub.listen_channel_subscription_message(broadcaster.id, self.on_sub_message)
      
     async def on_follow(self, data: ChannelFollowEvent):
-        caster = data.event.broadcaster_user_login
+        caster = await self.find_caster(caster_name=data.event.broadcaster_user_login)
         username = data.event.user_name
         event = Follow(caster, username)
-        self.REST_post(event.to_json_dict())
+        await self.REST_post(event.to_json_dict())
         
     async def on_cheer(self, data: ChannelCheerEvent):
-        caster = data.event.broadcaster_user_login
+        caster = await self.find_caster(caster_name=data.event.broadcaster_user_login)
         username = data.event.user_name
         amount = data.event.bits
         message = data.event.message
-        event = Bits(caster, username, amount, message)
-        self.REST_post(event.to_json_dict())
+        event = Bits(caster.username, username, caster.id, amount, message)
+        await self.REST_post(event.to_json_dict())
         
     async def on_redeem(self, data: ChannelPointsCustomRewardRedemptionAddEvent):
-        caster = data.event.broadcaster_user_login
+        caster = await self.find_caster(caster_name=data.event.broadcaster_user_login)
         username = data.event.user_name
         redeem_id = data.event.reward.id
         message = data.event.user_input
-        event = Redeem(caster, username, redeem_id, message)
-        self.REST_post(event.to_json_dict())
+        event = Redeem(caster.username, username, caster.id, redeem_id, message)
+        await self.REST_post(event.to_json_dict())
         
     async def on_sub(self, data: ChannelSubscribeEvent):
         # ignore gifts as they are handled else where
         if data.event.is_gift:
             return
-        caster = data.event.broadcaster_user_login
+        caster = await self.find_caster(caster_name=data.event.broadcaster_user_login)
         username = data.event.user_name
         tier = data.event.tier
         total_time = 1
         streak = 1
-        event = Sub(caster, username, tier, total_time, streak)
-        self.REST_post(event.to_json_dict())
+        event = Sub(caster.username, username, caster.id, tier, total_time, streak)
+        await self.REST_post(event.to_json_dict())
         
     async def on_sub_message(self, data: ChannelSubscriptionMessageEvent):
-        caster = data.event.broadcaster_user_login
+        caster = await self.find_caster(caster_name=data.event.broadcaster_user_login)
         username = data.event.user_name
         tier = data.event.tier
         total_time = data.event.duration_months
         streak = data.event.cumulative_months
         message = data.event.message.text
-        event = Sub(caster, username, tier, total_time, streak, message)
-        self.REST_post(event.to_json_dict())
+        event = Sub(caster.username, username, caster.id, tier, total_time, streak, message)
+        await self.REST_post(event.to_json_dict())
         
     async def on_raid(self, data: ChannelRaidEvent):
-        caster = data.event.broadcaster_user_login
-        username = data.event.user_name
+        caster = await self.find_caster(caster_name=data.event.to_broadcaster_user_login)
+        username = data.event.from_broadcaster_user_login
         amount = data.event.viewers
-        event = Raid(caster, username, amount)
-        self.REST_post(event.to_json_dict())
+        event = Raid(caster.username, username, caster.id, amount)
+        await self.REST_post(event.to_json_dict())
         
     async def on_gift(self, data: ChannelSubscriptionGiftEvent):
-        caster = data.event.broadcaster_user_login
+        caster = await self.find_caster(caster_name=data.event.broadcaster_user_login)
         username = data.event.user_name
         tier = data.event.tier
         amount = data.event.total
-        event = SubBomb(caster, username, tier, amount)
+        event = SubBomb(caster.username, username, caster.id, tier, amount)
         
-        self.REST_post(event.to_json_dict())
+        await self.REST_post(event.to_json_dict())
     
     async def remove_broadcaster(self, caster_name:str = None, caster_id:str = None):
         for caster in self.broadcasters:
@@ -454,6 +455,7 @@ class Bot:
                 reffed_casters.append(caster)
                 
         return reffed_casters
+    
     async def run(self):
         global auth, twitch
         
