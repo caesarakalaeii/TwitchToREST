@@ -1,4 +1,6 @@
 
+# TODO: Redo all of this, not working and/or stupid
+
 class Event:
     '''
     Class representing a twitchbased Event to easily convert the needed data into json
@@ -13,6 +15,7 @@ class Event:
         self.broadcaster = broadcaster
         self.username = username
         self.message = message
+        self.steam_id = steam_id
     
     def to_json_dict(self):
         '''
@@ -22,6 +25,7 @@ class Event:
             'EventType': self.event_type,
             'Username': self.username,
             'Broadcaster': self.broadcaster,
+            'SteamId': self.steam_id
         }
         if not self.message == None:
             base.update({'Message': self.message})
@@ -34,7 +38,7 @@ class Follow(Event):
     '''
     
     def __init__(self, broadcaster: str, username: str, steam_id:str, message: str = None):
-        self.event_type = 'follow'
+        self.event_type = 'Follow'
         super().__init__(broadcaster, username,steam_id, message)
     
     def to_json_dict(self):
@@ -45,14 +49,13 @@ class Sub(Event):
     '''
     Class representing a twitchbased subscribtion Event to easily convert the needed data into json
     '''
-    event_type = 'sub'
     tier: int
     total_time: int
     streak: int
     
     def __init__(self, broadcaster: str, username: str, steam_id:str, tier:int, total_time:int, streak:int, message: str = None):
         super().__init__(broadcaster, username, steam_id, message)
-        self.event_type = 'sub'
+        self.event_type = 'Sub'
         self.tier: int = tier
         self.total_time: int = total_time
         self.streak: int = streak
@@ -78,7 +81,7 @@ class SubBomb(Event):
     
     def __init__(self, broadcaster: str, username: str, steam_id:str, tier: int, amount, message: str = None):
         super().__init__(broadcaster, username, steam_id, message)
-        self.event_type = 'subbomb'
+        self.event_type = 'SubBomb'
         self.amount = amount
         self.tier = tier
     
@@ -95,13 +98,13 @@ class Gift(Event):
     Class representing a twitchbased gift event to easily convert the needed data into json
     '''
     
-    event_type = 'gift'
+    
     gifter_name: str
     tier: int
     
     def __init__(self, broadcaster: str, username: str, steam_id:str, gifter_name:str, tier:int, message: str = None):
         super().__init__(broadcaster, username, steam_id, message)
-        self.event_type = 'gift'
+        self.event_type = 'Gift'
         self.gifter_name = gifter_name
         self.tier = tier
     
@@ -121,7 +124,7 @@ class Redeem(Event):
     
     def __init__(self, broadcaster: str, username: str, steam_id:str, redeem_id: str, message: str = None):
         super().__init__(broadcaster, username, steam_id, message)
-        self.event_type = 'redeem'
+        self.event_type = 'Redeem'
         self.redeem_id = redeem_id
     
     def to_json_dict(self):
@@ -140,7 +143,7 @@ class Bits(Event):
     
     def __init__(self, broadcaster: str, username: str, steam_id:str, amount:int, message: str = None):
         super().__init__(broadcaster, username, steam_id, message)
-        self.event_type = 'bits'
+        self.event_type = 'Bits'
         self.amount = amount
     
     
@@ -160,7 +163,7 @@ class Raid(Event):
     
     def __init__(self, broadcaster: str, username: str, steam_id:str, amount:int, message: str = None):
         super().__init__(broadcaster, username, steam_id, message)
-        self.event_type = 'raid'
+        self.event_type = 'Raid'
         self.amount = amount
     
     def to_json_dict(self):
