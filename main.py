@@ -7,7 +7,8 @@ from logger import Logger
 import asyncio
 import json
 import secrets
-from my_secrets import *
+from some_secrets import *
+from config import *
 import requests
 from redeem_builder import Redeem_Builder, RedeemTemplate
 from broadcaster import Broadcaster
@@ -616,7 +617,7 @@ def main():
 
 if __name__ == '__main__':
     
-    bot = Bot(APP_ID, APP_SECRET, 'http://localhost:5001/api/data', 'caesarlp', 'Test', 'http://localhost:5000/login/confirm','https://webhook.site/71ad5166-1579-46db-a4d4-76c4bff0c062/callback', 5002, test = True)
+    bot = Bot(APP_ID, APP_SECRET, f'http://localhost:{REST_PORT}/api/data', USER_NAME, SERVER_NAME, AUTH_URL,WEBHOOK_URL, WEBHOOK_PORT, test = True)
     
     
     process2 = threading.Thread(target=main)
