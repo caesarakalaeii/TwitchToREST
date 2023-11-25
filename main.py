@@ -44,7 +44,7 @@ class Bot:
     esub: EventSubWebhook
     broadcasters:[Broadcaster]
     
-    def __init__(self, app_id, app_secret, endpoint, user_name, server_name, auth_url, webhook_url, webhook_port) -> None:
+    def __init__(self, app_id, app_secret, endpoint, user_name, server_name, auth_url, webhook_url, webhook_port, test = False) -> None:
         self.passwords = []
         self.__app_id = app_id
         self.__app_secret = app_secret
@@ -54,6 +54,7 @@ class Bot:
         self.webhook_url = webhook_url
         self.webhook_port = webhook_port
         self.user_name = user_name
+        self.test = test
         self.l = Logger(True)
         self.TARGET_SCOPE = [
         AuthScope.MODERATOR_READ_FOLLOWERS,
@@ -63,7 +64,71 @@ class Bot:
         self.registered_ids = ID_Queue()
         self.broadcasters = []
         self.await_login = True
+        self.is_running = True
+        self.commands = {
+        "help":{
+                "help": "help: prints all commands",
+                "value": False,
+                "cli_func": self.help_cli,
+                "permissions": 0
+            },
+        "stop":{
+                "help": "stop: stops the process",
+                "value": False,
+                "cli_func": self.stop_cli,
+                "permissions": 10
+        },
+        "add_pw":{
+            "help": "add_pw [ref]: adds new referral and password",
+            "value": True,
+            "cli_func": self.add_pw_cli,
+            "permissions": 10
+            
+        },
+        "rm_pw":{
+            "help": "rm_pw [ref]: removes referral and password",
+            "value": True,
+            "cli_func": self.rm_pw_cli,
+            "permissions": 10
+            
+        },
+        "list_ref":{
+            "help": "list_ref: lists all known referrals",
+            "value": False,
+            "cli_func": self.list_ref_cli,
+            "permissions": 10
+            
+        },
+        
+        }
+        
+    async def help_cli(self):
+        for command, value in self.commands.items():
+            self.l.passing(f'{value["help"]}')
+            
+    async def stop_cli(self):
+        self.l.fail("Stopping!")
+        try:
+            await twitch.close()
+        except:
+            pass
+        self.is_running = False
+        raise Exception("Stopped by User") #not the most elegant but works
     
+    async def list_ref_cli(self):
+        self.l.info('Available Referrals:')
+        for p in self.passwords:
+            self.l.info(p.referral)
+    
+    async def add_pw_cli(self, ref:str):
+        pw = input('Please input the password:\n')
+        
+        await self.add_pw(pw, ref)
+        self.l.passingblue(f"Password for {ref} was sucessfully created!")
+    
+    async def rm_pw_cli(self, ref:str):
+        await self.remove_pw(ref)
+        self.l.warning(f'Password for {ref} was sucessfully removed!')
     
     async def register_id(self, steamid):
         '''
@@ -105,10 +170,6 @@ class Bot:
                 self.passwords.remove(p)
         
         await self.update_pws()
-    
-    async def list_pw_refs(self):
-        for p in self.passwords:
-            print(p.referral)
         
     async def update_pws(self):
         # Convert Password objects to dictionaries
@@ -132,9 +193,15 @@ class Bot:
         # Convert dictionaries back to Password objects
         self.passwords = [Password(p['referral'], p['salt'], p['valid_hash']) for p in password_dicts]
 
+    async def find_caster(self, caster_id:str):
+        for caster in self.broadcasters:
+            if caster_id == caster.id:
+                return caster
+        return None
         
         
-    async def register_broadcaster(self, caster : Broadcaster):
+    async def register_broadcaster(self, caster_id:str):
+        caster = await self.find_caster(caster_id)
         d = caster.to_dict()
         d.update({'EventType':'BroadcasterAdd'})
         return await self.REST_post(d)
@@ -143,10 +210,7 @@ class Bot:
         d = caster.to_dict()
         d.update({'EventType':'BroadcasterRemove'})
         return await self.REST_post(d)
-    
-    
-    
-              
+            
     async def REST_post(self, data:dict):
     
         """
@@ -227,8 +291,7 @@ class Bot:
         await self.esub.listen_channel_raid(self.on_raid, to_broadcaster_user_id=broadcaster.id)
         await self.esub.listen_channel_subscription_gift(broadcaster.id, self.on_gift)
         await self.esub.listen_channel_subscription_message(broadcaster.id, self.on_sub_message)
-        
-        
+     
     async def on_follow(self, data: ChannelFollowEvent):
         caster = data.event.broadcaster_user_login
         username = data.event.user_name
@@ -289,9 +352,18 @@ class Bot:
         
         self.REST_post(event.to_json_dict())
     
-    
+    async def remove_broadcaster(self, caster_name:str = None, caster_id:str = None):
+        for caster in self.broadcasters:
+            if caster_name == caster.username or caster_id == caster.id:
+                self.broadcasters.remove(caster)
+        try:
+            self.add_broadcaster(self.broadcasters[0])
+        except IndexError:
+            pass
+  
     async def add_broadcaster(self, caster: Broadcaster):
-        self.broadcasters.append(caster)
+        if not caster in self.broadcasters:
+            self.broadcasters.append(caster)
         
         file_path = 'data/broadcasters.json'
         
@@ -305,7 +377,7 @@ class Bot:
         with open(file_path, 'w') as file:
             json.dump(await self.broadcasters_to_list(), file)
             
-        await self.register_broadcaster(caster)
+        await self.register_broadcaster(caster.id)
         
         return f'Sucessfully registered at {self.server_name}'
    
@@ -323,7 +395,6 @@ class Bot:
 
         # Convert dictionaries back to Password objects
         self.broadcasters = [Broadcaster(p['Id'],p['Username'], p['SteamId'], p['RedeemIds']) for p in caster_dicts]
-      
       
     async def broadcasters_to_list(self):
         l = []
@@ -363,9 +434,39 @@ class Bot:
         self.user = await first(twitch.get_users(logins=self.user_name))
         await self.load_broadcasters()
         for caster in self.broadcasters:
+            if self.test:
+                self.l.warning('Skipping Esub init! Test flag is set!')
+                break
             await self.initialize_esubs(caster)
             
         self.l.passing('Esubs initialized')
+        
+        self.l.passing('Starting CLI')
+        
+        await self.cli()
+        
+    async def cli(self):
+        while(self.is_running):
+            try:
+                com = input("type help for available commands\n")
+                await self.command_handler(com)
+            except Exception as e:
+                self.l.error(f'Exeption in cli_run, exiting: {e}')
+                exit(1)
+                
+    async def command_handler(self, command :str):
+        parts = command.split(" ")
+        if parts[0] == '':
+            return
+        if not(parts[0] in self.commands.keys()):
+            self.l.error(f'Command {parts[0]} unknown')
+        if self.commands[parts[0]]['value']:
+           await self.commands[parts[0]]['cli_func'](parts[1])
+           return
+        await self.commands[parts[0]]['cli_func']()
+            
+        
+        
         
 bot: Bot      
         
@@ -411,6 +512,7 @@ async def login_confirm():
     global bot, twitch
     args = request.args
     state = request.args.get('state')
+    ret_val = ''
     if state != auth.state:
         return 'Bad state', 401
     code = request.args.get('code')
@@ -422,7 +524,7 @@ async def login_confirm():
        
         if bot.await_login:
             await twitch.set_user_authentication(token, bot.TARGET_SCOPE, refresh)
-            ret_val = "Welcome home chief!"
+            ret_val += "Welcome home chief! "
             
         user_info = await first(twitch.get_users())
         name = user_info.login
@@ -461,7 +563,7 @@ def main():
 
 if __name__ == '__main__':
     
-    bot = Bot(APP_ID, APP_SECRET, 'http://localhost:5001/api/data', 'caesarlp', 'Test', 'http://localhost:5000/login/confirm','https://webhook.site/71ad5166-1579-46db-a4d4-76c4bff0c062/callback', 5002)
+    bot = Bot(APP_ID, APP_SECRET, 'http://localhost:5001/api/data', 'caesarlp', 'Test', 'http://localhost:5000/login/confirm','https://webhook.site/71ad5166-1579-46db-a4d4-76c4bff0c062/callback', 5002, test = True)
     
     
     process2 = threading.Thread(target=main)
