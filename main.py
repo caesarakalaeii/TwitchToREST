@@ -105,6 +105,19 @@ class Bot:
             "cli_func": self.rm_caster_cli,
             "permissions": 10
         }
+        ,
+        "list_caster":{
+            "help": "list_caster: lists all registered broadsasters",
+            "value": False,
+            "cli_func": self.list_caster_cli,
+            "permissions": 10
+        },
+        "list_caster_ref":{
+            "help": "list_caster_ref [ref]: lists all registered broadsasters wich used the referral",
+            "value": True,
+            "cli_func": self.list_caster_ref_cli,
+            "permissions": 10
+        }
         
         }
         
@@ -136,20 +149,30 @@ class Bot:
         await self.remove_pw(ref)
         self.l.warning(f'Password for {ref} was sucessfully removed!')
         
+    async def list_caster_cli(self):
+        for caster in self.broadcasters:
+            self.l.passing(f'Name: {caster.username} ID: {caster.id} SteamID: {caster.steam_id}  Referral: {caster.referral} Redeem_IDs: {caster.redeem_ids}')
+        
     async def rm_caster_cli(self, identifier:str):
         if identifier.isdigit():
-            self.remove_broadcaster(caster_id=identifier)
+            await self.remove_broadcaster(caster_id=identifier)
             self.l.warning(f'Bradcaster with ID {identifier} sucessfully removed')
         else:
-            self.remove_broadcaster(caster_name=identifier)
+            await self.remove_broadcaster(caster_name=identifier)
             self.l.warning(f'Bradcaster with name {identifier} sucessfully removed')
+    
+    async def list_caster_ref_cli(self, ref:str):
+        reffed_casts = await self.get_broadcasters_by_ref(ref)
+        for caster in reffed_casts:
+            self.l.passing(f'Name: {caster.username} ID: {caster.id} SteamID: {caster.steam_id} Referral: {caster.referral} Redeem_IDs: {caster.redeem_ids}')
+    
         
     
-    async def register_id(self, steamid):
+    async def register_id(self, steamid, referral):
         '''
         Registeres ID for later check
         '''
-        await self.registered_ids.put(steamid)
+        await self.registered_ids.put(steamid, referral)
         
     async def is_id_registered(self, steamid):
         '''
@@ -161,8 +184,9 @@ class Bot:
         '''
         Return and remove id from queue
         '''
+        ids, ref = await self.registered_ids.get()
         
-        return await self.registered_ids.get()
+        return ids, ref
     
     async def add_pw(self, pw:str, referral:str):
         '''
@@ -377,7 +401,12 @@ class Bot:
             pass
   
     async def add_broadcaster(self, caster: Broadcaster):
-        if not caster in self.broadcasters:
+        known = False
+        for c in self.broadcasters:
+            if caster.id == c.id:
+                known = True
+                break
+        if not known:
             self.broadcasters.append(caster)
         
         file_path = 'data/broadcasters.json'
@@ -409,7 +438,7 @@ class Bot:
         
 
         # Convert dictionaries back to Password objects
-        self.broadcasters = [Broadcaster(p['Id'],p['Username'], p['SteamId'], p['RedeemIds']) for p in caster_dicts]
+        self.broadcasters = [Broadcaster(p['Id'],p['Username'], p['SteamId'], p['RedeemIds'], p['Referral']) for p in caster_dicts]
       
     async def broadcasters_to_list(self):
         l = []
@@ -418,6 +447,13 @@ class Bot:
             l.append(d)
         return l    
         
+    async def get_broadcasters_by_ref(self, ref:str):
+        reffed_casters =[]
+        for caster in self.broadcasters:
+            if caster.referral == ref:
+                reffed_casters.append(caster)
+                
+        return reffed_casters
     async def run(self):
         global auth, twitch
         
@@ -514,7 +550,7 @@ async def login():
             return "Invalid username or password. Please try again."
 
         if steam_id.isdigit() and pbkdf2_sha256.verify(password + valid_salt, valid_password_hash):
-            await bot.register_id(steam_id)
+            await bot.register_id(steam_id, ref)
             return redirect(auth.return_auth_url())
         else:
             return "Invalid username or password. Please try again."
@@ -543,7 +579,7 @@ async def login_confirm():
             
         user_info = await first(twitch.get_users())
         name = user_info.login
-        steam_id = await bot.resolve_id()
+        steam_id, referral = await bot.resolve_id()
         
         try:
             redeem_ids = await bot.generate_redeems(user_info.id)
@@ -559,7 +595,7 @@ async def login_confirm():
         if not bot.await_login:
             await bot.initialize_esubs(user_info.id)
     
-        b = Broadcaster(user_info.id, name, steam_id, redeem_ids)
+        b = Broadcaster(user_info.id, name, steam_id, redeem_ids, referral)
         ret_val += await bot.add_broadcaster(b)
         
         

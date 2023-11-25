@@ -3,31 +3,32 @@ from asyncio import Queue
 
 class ID_Queue:
     
-    known_ids = [int]
+    known_ids = [(int, str)]
     queue = Queue()
     
-    async def put(self, id:int):
-        self.known_ids.append(id)
-        await self.queue.put(id)
+    async def put(self, ids:int, referral):
+        self.known_ids.append(ids)
+        await self.queue.put((ids, referral))
         
     async def get(self):
-        id = await self.queue.get()
-        self.known_ids.remove(id)
-        return id
+        ids, ref = await self.queue.get()
+        self.known_ids.remove(ids)
+        return ids, ref
+    
     async def is_empty(self):
         return self.queue.empty()
     
-    async def contains(self, id:int):
-        return id in self.known_ids
+    async def contains(self, ids:int):
+        return ids in self.known_ids
     
-    async def remove(self, id):
+    async def remove(self, ids):
         new_q = Queue
-        if not self.contains(id):
+        if not self.contains(ids):
             return
-        self.known_ids.remove(id)
+        self.known_ids.remove(ids)
         while(not self.queue.empty):
-            i = await self.queue.get()
-            if i == id:
+            i, ref = await self.queue.get()
+            if i == ids:
                 continue
-            new_q.put(i)
+            new_q.put((i, ref))
         self.queue = new_q
