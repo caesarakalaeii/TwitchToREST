@@ -99,6 +99,12 @@ class Bot:
             "permissions": 10
             
         },
+        "rm_caster":{
+            "help": "rm_caster [id/name]: removes and unregisteres broadcaster",
+            "value": True,
+            "cli_func": self.rm_caster_cli,
+            "permissions": 10
+        }
         
         }
         
@@ -129,6 +135,15 @@ class Bot:
     async def rm_pw_cli(self, ref:str):
         await self.remove_pw(ref)
         self.l.warning(f'Password for {ref} was sucessfully removed!')
+        
+    async def rm_caster_cli(self, identifier:str):
+        if identifier.isdigit():
+            self.remove_broadcaster(caster_id=identifier)
+            self.l.warning(f'Bradcaster with ID {identifier} sucessfully removed')
+        else:
+            self.remove_broadcaster(caster_name=identifier)
+            self.l.warning(f'Bradcaster with name {identifier} sucessfully removed')
+        
     
     async def register_id(self, steamid):
         '''
