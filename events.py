@@ -150,7 +150,6 @@ class Bits(Event):
     def to_json_dict(self):
         return {
             'Amount': self.amount
-
         }
     
 class Raid(Event):
