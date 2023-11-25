@@ -625,4 +625,4 @@ if __name__ == '__main__':
     
     process2.start()
     
-    app.run(port = AUTH_PORT)
+    app.run(host='0.0.0.0',port = AUTH_PORT)
