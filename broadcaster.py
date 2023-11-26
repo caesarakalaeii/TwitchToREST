@@ -14,12 +14,14 @@ class Broadcaster:
         self.referral = referral
         pass
     
-    def to_dict(self):
-        return {
+    def to_dict(self, redeem = True):
+        base = {
             'Referral': self.referral,
             'TwitchId': self.twitch_id,
             'TwitchLogin': self.twitch_login,
-            'SteamId': self.steam_id,
-            'RedeemIds': self.redeem_ids
+            'SteamId': self.steam_id
         }
+        if redeem:
+            base.update({'RedeemIds': self.redeem_ids})
+        return 
     

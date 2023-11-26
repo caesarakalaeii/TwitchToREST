@@ -246,13 +246,13 @@ class Bot:
         
         
     async def register_broadcaster(self, steam_id:str):
-        caster = await self.find_caster(steam_id = steam_id)
-        d = caster.to_dict()
+        caster:Broadcaster = await self.find_caster(steam_id = steam_id)
+        d = caster.to_dict(False)
         d.update({'EventType':'AddBroadcaster'})
         return await self.REST_post(d)
     
     async def unregister_broadcaster(self, caster : Broadcaster):
-        d = caster.to_dict()
+        d = caster.to_dict(False)
         d.update({'EventType':'RemoveBroadcaster'})
         return await self.REST_post(d)
             
