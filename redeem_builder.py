@@ -89,7 +89,17 @@ class Redeem_Builder:
         is_global_cooldown_enabled = True,
         global_cooldown_seconds = 60
         )
+        
         self.redeems_temps.append(heal)
+        swap = RedeemTemplate(
+        redeem_type = 'swap',
+        title = 'Swap | Twitch2BBR',
+        prompt = 'Swaps the streamer with a random player',
+        cost = 500,
+        is_global_cooldown_enabled = True,
+        global_cooldown_seconds = 60
+        )
+        self.redeems_temps.append(swap)
         
     
     

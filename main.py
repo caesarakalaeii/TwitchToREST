@@ -425,6 +425,7 @@ class Bot:
         for c in self.broadcasters:
             if caster.twitch_id == c.twitch_id:
                 known = True
+                c.redeem_ids = caster.redeem_ids
                 break
         if not known:
             self.broadcasters.append(caster)
