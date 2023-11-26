@@ -1,5 +1,3 @@
-<!-- Save this in a file, e.g., templates/login.html -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -43,9 +41,28 @@
         input[type="submit"]:hover {
             background-color: #45a049;
         }
+
+        /* Banner styles */
+        .banner {
+            background-color: #3498db;
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .banner a {
+            color: #fff;
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
+    <!-- Banner -->
+    <div class="banner">
+        <p>For our privacy policy, please visit <a href="/privacy">here</a>.</p>
+    </div>
+
     <h2>Login</h2>
     <form method="post" action="/bbr">
         <label for="referral">Referral:</label>

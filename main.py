@@ -532,7 +532,9 @@ app = Quart(__name__)
 app.secret_key = 'your_secret_key'
 
     
-    
+@app.route('/privacy')
+async def privacy():
+    return await render_template('privacy.html')
     
 @app.route('/bbr', methods=['GET', 'POST'])
 async def login():
