@@ -8,11 +8,11 @@ class Event:
     event_type: str
     steam_id:str
     username: str
-    broadcaster: str
+    twitch_login: str
     message: str = None
     
-    def __init__(self, broadcaster:str, username:str, steam_id:str, message:str = None):
-        self.broadcaster = broadcaster
+    def __init__(self, twitch_login:str, username:str, steam_id:str, message:str = None):
+        self.twitch_login = twitch_login
         self.username = username
         self.message = message
         self.steam_id = steam_id
@@ -24,7 +24,7 @@ class Event:
         base = {
             'EventType': self.event_type,
             'Username': self.username,
-            'Broadcaster': self.broadcaster,
+            'TwitchLogin': self.twitch_login,
             'SteamId': self.steam_id
         }
         if not (self.message == None or self.message == ""):
@@ -47,7 +47,7 @@ class Follow(Event):
 
 class Sub(Event):
     '''
-    Class representing a twitchbased subscribtion Event to easily convert the needed data into json
+    Class representing a twitchbased subscription Event to easily convert the needed data into json
     '''
     tier: int
     total_time: int
@@ -75,7 +75,6 @@ class SubBomb(Event):
     '''
     Class representing a twitchbased multi subscribtion (subbomb) Event to easily convert the needed data into json
     '''
-    event_type:str
     amount: int
     tier: int
     
@@ -120,8 +119,6 @@ class Redeem(Event):
     '''
     Class representing a twitchbased redeem event to easily convert the needed data into json
     '''
-    
-    event_type: str
     redeem_type: str
     
     def __init__(self, broadcaster: str, username: str, steam_id:str, redeem_type: str | None, message: str = None):
@@ -144,8 +141,6 @@ class Bits(Event):
     Class representing a twitchbased bit event to easily convert the needed data into json
     '''
     
-    
-    event_type: str
     amount: int
     
     def __init__(self, broadcaster: str, username: str, steam_id:str, amount:int, message: str = None):
@@ -155,16 +150,19 @@ class Bits(Event):
     
     
     def to_json_dict(self):
-        return {
+        base = super().to_json_dict()
+        base.update(
+        {
             'Amount': self.amount
-        }
+
+        })
+        return base
     
 class Raid(Event):
     '''
     Class representing a twitchbased raid event to easily convert the needed data into json
     '''
     
-    event_type:str
     amount: int
     
     def __init__(self, broadcaster: str, username: str, steam_id:str, amount:int, message: str = None):
@@ -173,7 +171,10 @@ class Raid(Event):
         self.amount = amount
     
     def to_json_dict(self):
-        return {
+        base = super().to_json_dict()
+        base.update(
+        {
             'Amount': self.amount
 
-        }
+        })
+        return base

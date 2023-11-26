@@ -272,6 +272,7 @@ class Bot:
         # Convert the data to JSON format
         json_data = json.dumps(data)
 
+        self.l.info(f'Data ready to send: {json_data}')
         
 
         # Make the POST request
