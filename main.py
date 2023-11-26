@@ -151,7 +151,7 @@ class Bot:
         
     async def list_caster_cli(self):
         for caster in self.broadcasters:
-            self.l.passing(f'Name: {caster.username} ID: {caster.id} SteamID: {caster.steam_id}  Referral: {caster.referral} Redeem_IDs: {caster.redeem_ids}')
+            self.l.passing(f'Name: {caster.username} ID: {caster.steam_id} SteamID: {caster.steam_id}  Referral: {caster.referral} Redeem_IDs: {caster.redeem_ids}')
         
     async def rm_caster_cli(self, identifier:str):
         if identifier.isdigit():
@@ -164,7 +164,7 @@ class Bot:
     async def list_caster_ref_cli(self, ref:str):
         reffed_casts = await self.get_broadcasters_by_ref(ref)
         for caster in reffed_casts:
-            self.l.passing(f'Name: {caster.username} ID: {caster.id} SteamID: {caster.steam_id} Referral: {caster.referral} Redeem_IDs: {caster.redeem_ids}')
+            self.l.passing(f'Name: {caster.username} ID: {caster.steam_id} SteamID: {caster.steam_id} Referral: {caster.referral} Redeem_IDs: {caster.redeem_ids}')
     
         
     
@@ -232,17 +232,19 @@ class Bot:
         # Convert dictionaries back to Password objects
         self.passwords = [Password(p['referral'], p['salt'], p['valid_hash']) for p in password_dicts]
 
-    async def find_caster(self, caster_id:str = None, caster_name:str = None):
+    async def find_caster(self, twitch_id:str = None, twitch_login:str = None, steam_id:str = None):
         for caster in self.broadcasters:
-            if caster_id == caster.id:
+            if twitch_id == caster.twitch_id:
                 return caster
-            if caster_name == caster.username:
+            if twitch_login == caster.twitch_login:
+                return caster
+            if steam_id == caster.steam_id:
                 return caster
         return None
         
         
-    async def register_broadcaster(self, caster_id:str):
-        caster = await self.find_caster(caster_id)
+    async def register_broadcaster(self, steam_id:str):
+        caster = await self.find_caster(steam_id = steam_id)
         d = caster.to_dict()
         d.update({'EventType':'AddBroadcaster'})
         return await self.REST_post(d)
@@ -311,7 +313,7 @@ class Bot:
                     await self.load_broadcasters()
                     broadcaster_known = False
                     for caster in self.broadcasters:
-                        if redeem.broadcaster_id == caster.id:
+                        if redeem.broadcaster_id == caster.twitch_id:
                             broadcaster_known = True
                             break
                     if not broadcaster_known:
@@ -324,78 +326,81 @@ class Bot:
         return redeem_ids
     
     async def initialize_esubs(self, broadcaster : Broadcaster):
-        await self.esub.listen_channel_follow_v2(broadcaster.id, self.user.id, self.on_follow)
-        await self.esub.listen_channel_cheer(broadcaster.id, self.on_cheer)
+        if self.test:
+                self.l.warning('Skipping Esub init! Test flag is set!')
+                return
+        await self.esub.listen_channel_follow_v2(broadcaster.twitch_id, self.user.id, self.on_follow)
+        await self.esub.listen_channel_cheer(broadcaster.twitch_id, self.on_cheer)
         for redeem_id in broadcaster.redeem_ids:
-            await self.esub.listen_channel_points_custom_reward_redemption_add(broadcaster.id, self.on_redeem, redeem_id)
-        await self.esub.listen_channel_subscribe(broadcaster.id, self.on_sub)
-        await self.esub.listen_channel_raid(self.on_raid, to_broadcaster_user_id=broadcaster.id)
-        await self.esub.listen_channel_subscription_gift(broadcaster.id, self.on_gift)
-        await self.esub.listen_channel_subscription_message(broadcaster.id, self.on_sub_message)
+            await self.esub.listen_channel_points_custom_reward_redemption_add(broadcaster.steam_id, self.on_redeem, redeem_id)
+        await self.esub.listen_channel_subscribe(broadcaster.twitch_id, self.on_sub)
+        await self.esub.listen_channel_raid(self.on_raid, to_broadcaster_user_id=broadcaster.twitch_id)
+        await self.esub.listen_channel_subscription_gift(broadcaster.twitch_id, self.on_gift)
+        await self.esub.listen_channel_subscription_message(broadcaster.twitch_id, self.on_sub_message)
      
     async def on_follow(self, data: ChannelFollowEvent):
-        caster = await self.find_caster(caster_name=data.event.broadcaster_user_login)
+        caster = await self.find_caster(twitch_login=data.event.broadcaster_user_login)
         username = data.event.user_name
         event = Follow(caster, username)
         await self.REST_post(event.to_json_dict())
         
     async def on_cheer(self, data: ChannelCheerEvent):
-        caster = await self.find_caster(caster_name=data.event.broadcaster_user_login)
+        caster = await self.find_caster(twitch_login=data.event.broadcaster_user_login)
         username = data.event.user_name
         amount = data.event.bits
         message = data.event.message
-        event = Bits(caster.username, username, caster.id, amount, message)
+        event = Bits(caster.twitch_login, username, caster.steam_id, amount, message)
         await self.REST_post(event.to_json_dict())
         
     async def on_redeem(self, data: ChannelPointsCustomRewardRedemptionAddEvent):
-        caster = await self.find_caster(caster_name=data.event.broadcaster_user_login)
+        caster = await self.find_caster(twitch_login=data.event.broadcaster_user_login)
         username = data.event.user_name
         redeem_id = data.event.reward.id
         message = data.event.user_input
-        event = Redeem(caster.username, username, caster.id, redeem_id, message)
+        event = Redeem(caster.username, username, caster.steam_id, redeem_id, message)
         await self.REST_post(event.to_json_dict())
         
     async def on_sub(self, data: ChannelSubscribeEvent):
         # ignore gifts as they are handled else where
         if data.event.is_gift:
             return
-        caster = await self.find_caster(caster_name=data.event.broadcaster_user_login)
+        caster = await self.find_caster(twitch_login=data.event.broadcaster_user_login)
         username = data.event.user_name
         tier = data.event.tier
         total_time = 1
         streak = 1
-        event = Sub(caster.username, username, caster.id, tier, total_time, streak)
+        event = Sub(caster.username, username, caster.steam_id, tier, total_time, streak)
         await self.REST_post(event.to_json_dict())
         
     async def on_sub_message(self, data: ChannelSubscriptionMessageEvent):
-        caster = await self.find_caster(caster_name=data.event.broadcaster_user_login)
+        caster = await self.find_caster(twitch_login=data.event.broadcaster_user_login)
         username = data.event.user_name
         tier = data.event.tier
         total_time = data.event.duration_months
         streak = data.event.cumulative_months
         message = data.event.message.text
-        event = Sub(caster.username, username, caster.id, tier, total_time, streak, message)
+        event = Sub(caster.username, username, caster.steam_id, tier, total_time, streak, message)
         await self.REST_post(event.to_json_dict())
         
     async def on_raid(self, data: ChannelRaidEvent):
-        caster = await self.find_caster(caster_name=data.event.to_broadcaster_user_login)
+        caster = await self.find_caster(twitch_login=data.event.to_broadcaster_user_login)
         username = data.event.from_broadcaster_user_login
         amount = data.event.viewers
-        event = Raid(caster.username, username, caster.id, amount)
+        event = Raid(caster.username, username, caster.steam_id, amount)
         await self.REST_post(event.to_json_dict())
         
     async def on_gift(self, data: ChannelSubscriptionGiftEvent):
-        caster = await self.find_caster(caster_name=data.event.broadcaster_user_login)
+        caster = await self.find_caster(twitch_login=data.event.broadcaster_user_login)
         username = data.event.user_name
         tier = data.event.tier
         amount = data.event.total
-        event = SubBomb(caster.username, username, caster.id, tier, amount)
+        event = SubBomb(caster.username, username, caster.steam_id, tier, amount)
         
         await self.REST_post(event.to_json_dict())
     
     async def remove_broadcaster(self, caster_name:str = None, caster_id:str = None):
         for caster in self.broadcasters:
-            if caster_name == caster.username or caster_id == caster.id:
+            if caster_name == caster.username or caster_id == caster.steam_id:
                 self.broadcasters.remove(caster)
         try:
             self.add_broadcaster(self.broadcasters[0])
@@ -423,7 +428,7 @@ class Bot:
         with open(file_path, 'w') as file:
             json.dump(await self.broadcasters_to_list(), file)
             
-        await self.register_broadcaster(caster.id)
+        await self.register_broadcaster(caster.steam_id)
         
         return f'Sucessfully registered at {self.server_name}'
    
@@ -440,7 +445,7 @@ class Bot:
         
 
         # Convert dictionaries back to Password objects
-        self.broadcasters = [Broadcaster(p['Id'],p['Username'], p['SteamId'], p['RedeemIds'], p['Referral']) for p in caster_dicts]
+        self.broadcasters = [Broadcaster(p['TwitchId'],p['TwitchLogin'], p['SteamId'], p['RedeemIds'], p['Referral']) for p in caster_dicts]
       
     async def broadcasters_to_list(self):
         l = []
@@ -589,16 +594,17 @@ async def login_confirm():
         try:
             redeem_ids = await bot.generate_redeems(user_info.id)
         except FileExistsError as e:
-            return f'{e}, please delete the BBR2TTV redeems and try again'
+            return f'{e}, please delete the TTV2BBR redeems and try again'
        
         if redeem_ids == None:
             return f'No redeem was initialized, please contact a server admin', 500
             
         if len(redeem_ids) < 1:
-            ret_val += f'No redeem was initialized, as they already exists. '
+            ret_val += f'No redeem was initialized, as they already exist. '
             
         if not bot.await_login:
-            await bot.initialize_esubs(user_info.id)
+            caster = await bot.find_caster(twitch_id=user_info.id)
+            await bot.initialize_esubs(caster)
     
         b = Broadcaster(user_info.id, name, steam_id, redeem_ids, referral)
         ret_val += await bot.add_broadcaster(b)
@@ -619,7 +625,7 @@ def main():
 
 if __name__ == '__main__':
     
-    bot = Bot(APP_ID, APP_SECRET, f'http://localhost:{REST_PORT}/api/data', USER_NAME, SERVER_NAME, AUTH_URL,WEBHOOK_URL, WEBHOOK_PORT, test = True)
+    bot = Bot(APP_ID, APP_SECRET, f'http://localhost:{REST_PORT}/api/data', USER_NAME, SERVER_NAME, AUTH_URL,WEBHOOK_URL, WEBHOOK_PORT, TEST)
     
     
     process2 = threading.Thread(target=main)
