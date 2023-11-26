@@ -405,7 +405,7 @@ class Bot:
     async def add_broadcaster(self, caster: Broadcaster):
         known = False
         for c in self.broadcasters:
-            if caster.id == c.id:
+            if caster.twitch_id == c.twitch_id:
                 known = True
                 break
         if not known:
