@@ -31,7 +31,7 @@ def send_json_post(endpoint, data):
         response.raise_for_status()
 
 # Example usage:
-endpoint_url = "http://localhost:5000"
+endpoint_url = "http://localhost:5001"
 json_data_to_send = {"SteamId": "123456", "EventType":"Follow"}
 
 try:

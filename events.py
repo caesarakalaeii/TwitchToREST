@@ -27,7 +27,7 @@ class Event:
             'Broadcaster': self.broadcaster,
             'SteamId': self.steam_id
         }
-        if not self.message == None:
+        if not (self.message == None or self.message == ""):
             base.update({'Message': self.message})
         
         return base
@@ -109,10 +109,12 @@ class Gift(Event):
         self.tier = tier
     
     def to_json_dict(self):
-        return {
+        base = super().to_json_dict()
+        base.update({
             'Tier': self.tier,
             'GifterName': self.gifter_name
-        }
+        })
+        return 
     
 class Redeem(Event):
     '''
@@ -120,17 +122,22 @@ class Redeem(Event):
     '''
     
     event_type: str
-    redeem_id: str
+    redeem_type: str
     
-    def __init__(self, broadcaster: str, username: str, steam_id:str, redeem_id: str, message: str = None):
+    def __init__(self, broadcaster: str, username: str, steam_id:str, redeem_type: str | None, message: str = None):
         super().__init__(broadcaster, username, steam_id, message)
         self.event_type = 'Redeem'
-        self.redeem_id = redeem_id
+        if redeem_type == None:
+            raise ValueError("Redeem unkown")
+        self.redeem_type = redeem_type
     
     def to_json_dict(self):
-        return {
-            'RedeemId': self.redeem_id
-        }
+        
+        base = super().to_json_dict()
+        base.update({
+            'RedeemType': self.redeem_type
+        })
+        return base
     
 class Bits(Event):
     '''
