@@ -360,7 +360,7 @@ class Bot:
         username = data.event.user_name
         redeem_id = data.event.reward.id
         redeem_type = None
-        for k,v in caster.redeem_ids:
+        for k,v in caster.redeem_ids.items():
             if v == redeem_id:
                 redeem_type = k
                 break
