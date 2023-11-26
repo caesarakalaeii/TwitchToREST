@@ -334,7 +334,7 @@ class Bot:
                 return
         await self.esub.listen_channel_follow_v2(broadcaster.twitch_id, self.user.id, self.on_follow)
         await self.esub.listen_channel_cheer(broadcaster.twitch_id, self.on_cheer)
-        for redeem_id in broadcaster.redeem_ids:
+        for redeem_id in broadcaster.redeem_ids.values():
             await self.esub.listen_channel_points_custom_reward_redemption_add(broadcaster.twitch_id, self.on_redeem, redeem_id)
         await self.esub.listen_channel_subscribe(broadcaster.twitch_id, self.on_sub)
         await self.esub.listen_channel_raid(self.on_raid, to_broadcaster_user_id=broadcaster.twitch_id)
