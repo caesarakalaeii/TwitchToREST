@@ -59,7 +59,8 @@ class Bot:
         self.TARGET_SCOPE = [
         AuthScope.MODERATOR_READ_FOLLOWERS,
         AuthScope.CHANNEL_READ_REDEMPTIONS,
-        AuthScope.CHANNEL_MANAGE_REDEMPTIONS
+        AuthScope.CHANNEL_MANAGE_REDEMPTIONS,
+        AuthScope.BITS_READ
         ]
         self.registered_ids = ID_Queue()
         self.broadcasters = []
