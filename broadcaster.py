@@ -23,5 +23,5 @@ class Broadcaster:
         }
         if redeem:
             base.update({'RedeemIds': self.redeem_ids})
-        return 
+        return base
     
