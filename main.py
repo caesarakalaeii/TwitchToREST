@@ -637,7 +637,7 @@ def main():
 
 if __name__ == '__main__':
     
-    bot = Bot(APP_ID, APP_SECRET, f'http://localhost:{REST_PORT}/api/data', USER_NAME, SERVER_NAME, AUTH_URL,WEBHOOK_URL, WEBHOOK_PORT, TEST)
+    bot = Bot(APP_ID, APP_SECRET, f'http://{REST_URI}:{REST_PORT}/api/data', USER_NAME, SERVER_NAME, AUTH_URL,WEBHOOK_URL, WEBHOOK_PORT, TEST)
     
     
     process2 = threading.Thread(target=main)
