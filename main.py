@@ -294,6 +294,7 @@ class Bot:
         custom_redeem = None
         for redeem in redeems:
             try:
+                self.l.info(f"Generating redeem: {redeem.title}")
                 custom_redeem = await twitch.create_custom_reward(redeem.broadcaster_id, 
                                                                     redeem.title, 
                                                                     redeem.cost, 
@@ -309,6 +310,7 @@ class Bot:
                                                                     redeem.global_cooldown_seconds, 
                                                                     redeem.should_redemptions_skip_request_queue)
                 redeem_ids.update({redeem.redeem_type:custom_redeem.id})
+                asyncio.sleep(1)
             except TwitchAPIException as e:
                 if e.args[0] == 'Bad Request - CREATE_CUSTOM_REWARD_DUPLICATE_REWARD':
                     self.l.warning(f'Redeem already exists: {e}')
