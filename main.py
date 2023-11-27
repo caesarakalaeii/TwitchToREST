@@ -288,7 +288,7 @@ class Bot:
         
     async def generate_redeems(self, broadcaster_id):
         builder = Redeem_Builder()
-        
+        self.l.info("Generating Redeems")
         redeems = builder.build(broadcaster_id)
         redeem_ids = {}
         custom_redeem = None
