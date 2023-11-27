@@ -61,6 +61,18 @@ class RedeemTemplate:
 class Redeem_Builder:
     '''
     Class to build an array of redeems based on certain standards
+    Currently usable redeems:
+    HEAL,
+    KILL,
+    SWAP,
+    REVEAL,
+    ZOOMIES,
+    GLASS,
+    FREEZE,
+    BLEED,
+    TRUNTABLES,
+    MEELEE, 
+    DEFAULT
     '''
     
     redeems_temps: [RedeemTemplate]
@@ -111,6 +123,66 @@ class Redeem_Builder:
         )
         self.redeems_temps.append(reveal)
         
+        
+        zoomies = RedeemTemplate(
+        redeem_type = 'zoomies',
+        title = 'Zoomies | Twitch2BBR',
+        prompt = '1 Minute of speed',
+        cost = 500,
+        is_global_cooldown_enabled = True,
+        global_cooldown_seconds = 60
+        )
+        self.redeems_temps.append(zoomies)
+        
+        glass = RedeemTemplate(
+        redeem_type = 'glass',
+        title = 'Glass Mode | Twitch2BBR',
+        prompt = '1 Minute of being like Glass',
+        cost = 500,
+        is_global_cooldown_enabled = True,
+        global_cooldown_seconds = 60
+        )
+        self.redeems_temps.append(glass)
+        
+        freeze = RedeemTemplate(
+        redeem_type = 'freeze',
+        title = 'Freeze | Twitch2BBR',
+        prompt = '10 sec Freezing',
+        cost = 500,
+        is_global_cooldown_enabled = True,
+        global_cooldown_seconds = 60
+        )
+        self.redeems_temps.append(freeze)
+        
+        bleed = RedeemTemplate(
+        redeem_type = 'bleed',
+        title = 'Bleed | Twitch2BBR',
+        prompt = '60s of bleeding very easily',
+        cost = 500,
+        is_global_cooldown_enabled = True,
+        global_cooldown_seconds = 60
+        )
+        self.redeems_temps.append(bleed)
+        
+        turntables = RedeemTemplate(
+        redeem_type = 'turntables',
+        title = 'Turntables | Twitch2BBR',
+        prompt = 'Switch the Team, how the turntables',
+        cost = 500,
+        is_global_cooldown_enabled = True,
+        global_cooldown_seconds = 60
+        )
+        self.redeems_temps.append(turntables)
+        
+        melee = RedeemTemplate(
+        redeem_type = 'melee',
+        title = 'Melee | Twitch2BBR', # Needs Queue???
+        prompt = 'Melee Only',
+        cost = 500,
+        is_global_cooldown_enabled = True,
+        global_cooldown_seconds = 60
+        )
+        self.redeems_temps.append(melee)
     
     
     def build(self, broadcaster_id):
