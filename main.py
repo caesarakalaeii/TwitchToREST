@@ -375,6 +375,7 @@ class Bot:
                 try:
                     event = Redeem(caster.twitch_login, username, caster.steam_id, k, message)
                     await self.REST_post(event.to_json_dict())
+                    await asyncio.sleep(10)
                 except ValueError as e:
                     self.l.error(e)
                     pass
