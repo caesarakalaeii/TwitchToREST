@@ -379,6 +379,7 @@ class Bot:
                     self.l.error(e)
                     pass
                     
+            return
                 
         
         
