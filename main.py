@@ -368,6 +368,20 @@ class Bot:
                 break
         
         message = data.event.user_input
+        if redeem_type == 'test':
+            for k,v in caster.redeem_ids.items():
+                if v == 'test':
+                    continue
+                try:
+                    event = Redeem(caster.twitch_login, username, caster.steam_id, v, message)
+                    await self.REST_post(event.to_json_dict())
+                except ValueError as e:
+                    self.l.error(e)
+                    pass
+                    
+                
+        
+        
         try:
             event = Redeem(caster.twitch_login, username, caster.steam_id, redeem_type, message)
             await self.REST_post(event.to_json_dict())

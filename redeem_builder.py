@@ -176,13 +176,33 @@ class Redeem_Builder:
         
         melee = RedeemTemplate(
         redeem_type = 'melee',
-        title = 'Melee | Twitch2BBR', # Needs Queue???
+        title = 'Melee | Twitch2BBR',
         prompt = 'Melee Only',
         cost = 500,
         is_global_cooldown_enabled = True,
         global_cooldown_seconds = 60
         )
         self.redeems_temps.append(melee)
+        
+        random = RedeemTemplate(
+        redeem_type = 'random',
+        title = 'Random | Twitch2BBR',
+        prompt = 'Random Event',
+        cost = 500,
+        is_global_cooldown_enabled = True,
+        global_cooldown_seconds = 60
+        )
+        self.redeems_temps.append(random)
+        
+        test = RedeemTemplate(
+        redeem_type = 'test',
+        title = 'Test | Twitch2BBR',
+        prompt = 'Tests All events',
+        cost = 500,
+        is_global_cooldown_enabled = True,
+        global_cooldown_seconds = 60
+        )
+        self.redeems_temps.append(test)
     
     
     def build(self, broadcaster_id):
