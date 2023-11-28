@@ -458,7 +458,10 @@ class Bot:
         with open(file_path, 'w') as file:
             json.dump(await self.broadcasters_to_list(), file)
             
-        await self.register_broadcaster(caster.steam_id)
+        try:
+            await self.register_broadcaster(caster.steam_id)
+        except:
+            return f'Server {self.server_name} is unresponsive, please try again later or contact an admin'
         
         return f'Sucessfully registered at {self.server_name}'
    
