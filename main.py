@@ -370,10 +370,10 @@ class Bot:
         message = data.event.user_input
         if redeem_type == 'test':
             for k,v in caster.redeem_ids.items():
-                if v == 'test':
+                if k == 'test':
                     continue
                 try:
-                    event = Redeem(caster.twitch_login, username, caster.steam_id, v, message)
+                    event = Redeem(caster.twitch_login, username, caster.steam_id, k, message)
                     await self.REST_post(event.to_json_dict())
                 except ValueError as e:
                     self.l.error(e)
