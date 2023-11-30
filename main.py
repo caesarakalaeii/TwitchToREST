@@ -251,7 +251,7 @@ class Bot:
     async def register_broadcaster(self, steam_id:str):
         caster:Broadcaster = await self.find_caster(steam_id = steam_id)
         d = caster.to_dict(False)
-        self.votes[caster.steam_id] = Vote(caster, self)
+        self.votes[caster.steam_id] = Vote(caster, self.l, self.endpoint)
         d.update({'EventType':'AddBroadcaster'})
         return await self.REST_post(d)
     
@@ -557,7 +557,7 @@ class Bot:
                 break
             await self.initialize_esubs(caster)
             caster_logins.append(caster.twitch_login)
-            self.votes[caster.steam_id] = Vote(caster, self)
+            self.votes[caster.steam_id] = Vote(caster, self.l, self.endpoint)
         chat.join_room(caster_logins)
             
         self.l.passing('Esubs initialized')

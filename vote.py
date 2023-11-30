@@ -6,20 +6,21 @@ import json
 
 import requests
 from broadcaster import Broadcaster
-from main import Bot
+from logger import Logger
 
 
 class Vote:
     broadcaster: Broadcaster
-    bot:Bot
     voted: list
+    endpoint:str
     
-    def __init__(self, broadcaster: Broadcaster, bot:Bot) -> None:
+    def __init__(self, broadcaster: Broadcaster, l:Logger, endpoint:str) -> None:
         self.broadcaster = broadcaster
-        self.bot = bot
+        self.l = l
         self.isRunning = False
         self.choice = []
         self.vote_on_going = False
+        self.endpoint = endpoint
         
         
         
@@ -66,11 +67,11 @@ class Vote:
         # Convert the data to JSON format
         json_data = json.dumps(data)
 
-        self.bot.l.info(f'Data ready to send: {json_data}')
+        self.l.info(f'Data ready to send: {json_data}')
         
 
         # Make the POST request
-        response = requests.post(self.bot.endpoint, json=json_data)
+        response = requests.post(self.endpoint, json=json_data)
 
         # Check if the request was successful (status code 2xx)
         if response.ok:
