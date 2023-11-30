@@ -605,9 +605,12 @@ class Bot:
             return
         
         self.l.info(f'Starting new Vote thread')
-        process2 = threading.Thread(target=self.votes[steam_id].vote())
+        process2 = threading.Thread(target=self.vote_spawn(steam_id))
         process2.start()
         
+    def vote_spawn(self, steam_id):
+        asyncio.run(self.votes[steam_id].vote())
+    
     async def stop_vote(self, steam_id:str):
         self.votes[steam_id].isRunning = False
         
