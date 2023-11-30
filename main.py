@@ -1,4 +1,6 @@
 import os
+import sys
+import threading
 import time
 from events import *
 from logger import Logger
@@ -603,9 +605,10 @@ class Bot:
             return
         
         self.l.info(f'Starting new Vote thread')
-        asyncio.create_task(self.votes[steam_id].vote())
         
-    
+        loop_task = asyncio.create_task(self.votes[steam_id].vote())
+        
+        
     async def stop_vote(self, steam_id:str):
         self.votes[steam_id].isRunning = False
         
@@ -654,7 +657,6 @@ async def login():
 
 @app.route('/vote', methods=['POST'])
 async def receive_vote():
-    bot.l.info(await request.data)
     try:
         data = await request.get_json()
         # Assuming the incoming data is in JSON format
@@ -722,7 +724,9 @@ async def login_confirm():
     
     return ret_val
 
- 
+def main():
+    asyncio.run(bot.run())
+    
     
     
 
@@ -731,6 +735,9 @@ if __name__ == '__main__':
     
     
     
-    asyncio.create_task(bot.run())
+    process2 = threading.Thread(target=main)
 
+    
+    process2.start()
+    
     app.run(host='0.0.0.0',port = AUTH_PORT)
