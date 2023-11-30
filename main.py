@@ -25,8 +25,7 @@ from twitchAPI.chat import Chat, EventData, ChatMessage, JoinEvent, JoinedEvent,
 
 from vote import Vote
 
-auth: UserAuthenticator
-twitch: Twitch
+
 
 
 class Password:
@@ -47,6 +46,8 @@ class Bot:
     broadcasters: [Broadcaster]
     chat: Chat
     votes: dict
+    twitch: Twitch
+    auth: UserAuthenticator
     
     def __init__(self, app_id, app_secret, endpoint, user_name, server_name, auth_url, webhook_url, webhook_port, test = False) -> None:
         self.passwords = []
@@ -542,8 +543,8 @@ class Bot:
                 raise KeyboardInterrupt("User specified shutdown")
         self.l.passingblue("App inital login successful")
         self.l.passingblue("Welcome home Chief!")
-        chat = Chat(twitch)
         
+        chat = Chat(twitch)
         self.esub = EventSubWebhook(self.webhook_url, self.webhook_port, twitch)
         await self.esub.unsubscribe_all() # unsub, other wise stuff breaky
         self.esub.start()
@@ -595,7 +596,8 @@ class Bot:
         
         
         
-bot: Bot      
+bot = Bot(APP_ID, APP_SECRET, f'http://{REST_URI}:{REST_PORT}/api/data', USER_NAME, SERVER_NAME, AUTH_URL,WEBHOOK_URL, WEBHOOK_PORT, TEST)
+     
         
         
         
@@ -655,21 +657,20 @@ async def receive_vote():
 
 @app.route('/login/confirm')
 async def login_confirm():
-    global bot, twitch
     args = request.args
     state = request.args.get('state')
     ret_val = ''
-    if state != auth.state:
+    if state != bot.auth.state:
         return 'Bad state', 401
     code = request.args.get('code')
     if code is None:
         return 'Missing code', 400
     try:
         
-        token, refresh = await auth.authenticate(user_token=code)
+        token, refresh = await bot.auth.authenticate(user_token=code)
        
         if bot.await_login:
-            await twitch.set_user_authentication(token, bot.TARGET_SCOPE, refresh)
+            await bot.twitch.set_user_authentication(token, bot.TARGET_SCOPE, refresh)
             ret_val += "Welcome home chief! "
             
         user_info = await first(twitch.get_users())
@@ -710,7 +711,6 @@ def main():
 
 if __name__ == '__main__':
     
-    bot = Bot(APP_ID, APP_SECRET, f'http://{REST_URI}:{REST_PORT}/api/data', USER_NAME, SERVER_NAME, AUTH_URL,WEBHOOK_URL, WEBHOOK_PORT, TEST)
     
     
     process2 = threading.Thread(target=main)
