@@ -28,6 +28,7 @@ class Vote:
         pass
     
     def reset_choices(self):
+        self.l.info(f'Resetting Vote for {self.broadcaster.twitch_login}')
         self.choice[0] = 0
         self.choice[1] = 0
         self.choice[2] = 0
@@ -35,17 +36,19 @@ class Vote:
         self.voted = []
     
     async def vote(self):
+        self.l.info(f'Voting enabled for {self.broadcaster.twitch_login}')
         while(self.isRunning):
             vote_start = datetime.datetime.now()
             while(self.vote_on_going):
-                asyncio.sleep(2)
+                await asyncio.sleep(2)
                 await self.update_vote((datetime.datetime.now() - vote_start).total_seconds())
-                if(datetime.datetime.now() - vote_start == datetime.timedelta(seconds=30)):  # time to vote
+                if(datetime.datetime.now() - vote_start >= datetime.timedelta(seconds=30)):  # time to vote
                     self.end_vote()
-            asyncio.sleep(120) # time till next vote
+            await asyncio.sleep(120) # time till next vote
         
         
     async def update_vote(self, time:int):
+        self.l.info(f'Updated vote for {self.broadcaster.twitch_login}')
         
         data = {
             "EventType": "VoteOnGoing",
@@ -56,6 +59,8 @@ class Vote:
         await self.POST(data)
     
     async def end_vote(self):
+        self.l.info(f'Ended vote for {self.broadcaster.twitch_login}')
+        
         data = {
             "EventType": "VoteEnd",
             "SteamId": self.broadcaster.steam_id,

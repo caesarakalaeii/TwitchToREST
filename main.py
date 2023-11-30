@@ -600,6 +600,11 @@ class Bot:
         await self.commands[parts[0]]['cli_func']()
             
     async def start_vote(self, steam_id: str):
+        if self.votes[steam_id].isRunning:
+            self.l.info(f'Vote Already on going thread')
+            return
+        
+        self.l.info(f'Starting new Vote thread')
         process2 = threading.Thread(target=self.votes[steam_id].vote())
         process2.start()
         
@@ -651,10 +656,11 @@ async def login():
 
 @app.route('/vote', methods=['POST'])
 async def receive_vote():
+    bot.l.info(request.data)
     try:
-        # Assuming the incoming data is in JSON format
         data = await request.get_json()
-        print("Received JSON data:", data)
+        # Assuming the incoming data is in JSON format
+        bot.l.info(f'Got Data for vote {data}')
         
         if data["Vote"] == "Start":
             await bot.start_vote(data["SteamId"])
