@@ -603,7 +603,7 @@ class Bot:
         if self.votes[steam_id].isRunning:
             self.l.info(f'Vote Already started a thread, restarting')
             self.votes[steam_id].isRunning = False
-            self.init_vote(steam_id)
+            await self.init_vote(steam_id)
             return
         
         self.l.info(f'Starting new Vote thread')
