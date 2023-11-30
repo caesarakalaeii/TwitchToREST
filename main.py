@@ -23,6 +23,8 @@ from twitchAPI.object.eventsub import ChannelFollowEvent, ChannelSubscribeEvent,
 from twitchAPI.type import AuthScope, ChatEvent, TwitchAPIException, EventSubSubscriptionConflict, EventSubSubscriptionError, EventSubSubscriptionTimeout, TwitchBackendException
 from twitchAPI.chat import Chat, EventData, ChatMessage, JoinEvent, JoinedEvent, ChatCommand, ChatUser
 
+from vote import Vote
+
 auth: UserAuthenticator
 twitch: Twitch
 
@@ -38,11 +40,13 @@ class Password:
         self.valid_hash = valid_hash
 
 class Bot:
-    TARGET_SCOPE:[]
+    TARGET_SCOPE: []
     registered_ids: ID_Queue
-    passwords:[Password]
+    passwords: [Password]
     esub: EventSubWebhook
-    broadcasters:[Broadcaster]
+    broadcasters: [Broadcaster]
+    chat: Chat
+    votes: dict
     
     def __init__(self, app_id, app_secret, endpoint, user_name, server_name, auth_url, webhook_url, webhook_port, test = False) -> None:
         self.passwords = []
@@ -65,6 +69,7 @@ class Bot:
         ]
         self.registered_ids = ID_Queue()
         self.broadcasters = []
+        self.votes = {}
         self.await_login = True
         self.is_running = True
         self.commands = {
@@ -123,6 +128,7 @@ class Bot:
         
         }
         
+        
     async def help_cli(self):
         for command, value in self.commands.items():
             self.l.passing(f'{value["help"]}')
@@ -167,9 +173,7 @@ class Bot:
         reffed_casts = await self.get_broadcasters_by_ref(ref)
         for caster in reffed_casts:
             self.l.passing(f'Name: {caster.username} ID: {caster.steam_id} SteamID: {caster.steam_id} Referral: {caster.referral} Redeem_IDs: {caster.redeem_ids}')
-    
-        
-    
+   
     async def register_id(self, steamid, referral):
         '''
         Registeres ID for later check
@@ -243,16 +247,17 @@ class Bot:
             if steam_id == caster.steam_id:
                 return caster
         return None
-        
-        
+       
     async def register_broadcaster(self, steam_id:str):
         caster:Broadcaster = await self.find_caster(steam_id = steam_id)
         d = caster.to_dict(False)
+        self.votes[caster.steam_id] = Vote(caster, self)
         d.update({'EventType':'AddBroadcaster'})
         return await self.REST_post(d)
     
     async def unregister_broadcaster(self, caster : Broadcaster):
         d = caster.to_dict(False)
+        self.votes.pop(caster.steam_id)
         d.update({'EventType':'RemoveBroadcaster'})
         return await self.REST_post(d)
             
@@ -429,6 +434,23 @@ class Bot:
         
         await self.REST_post(event.to_json_dict())
     
+    async def on_message_typed(self, data:ChatMessage):
+        choice = 0
+        if data.text == "1":
+            choice = 1
+        if data.text == "2":
+            choice = 2
+        if data.text == "3":
+            choice = 3
+        if data.text == "4":
+            choice = 4
+        if choice != 0:
+            for vote in self.votes.values:
+                if data.room == vote.broadcaster.twitch_login and vote.vote_on_going and not data.user.id in vote.voted:
+                    vote.voted.append(data.user.id)
+                    vote.register_vote(choice)
+                
+    
     async def remove_broadcaster(self, caster_name:str = None, caster_id:str = None):
         for caster in self.broadcasters:
             if caster_name == caster.twitch_login or caster_id == caster.steam_id:
@@ -462,6 +484,7 @@ class Bot:
             
         try:
             await self.register_broadcaster(caster.steam_id)
+            await self.chat.join_room(caster.twitch_login)
         except:
             return f'Server {self.server_name} is unresponsive, please try again later or contact an admin'
         
@@ -510,7 +533,7 @@ class Bot:
             await bot.add_pw(pw, ref)
         twitch = await Twitch(self.__app_id, self.__app_secret)
         auth = UserAuthenticator(twitch, self.TARGET_SCOPE, url=self.auth_url)
-        
+        chat = Chat(twitch)
         while(self.await_login):
             try:
                 self.l.info("App awaiting inital login")
@@ -527,11 +550,15 @@ class Bot:
         
         self.user = await first(twitch.get_users(logins=self.user_name))
         await self.load_broadcasters()
+        caster_logins = []
         for caster in self.broadcasters:
             if self.test:
-                self.l.warning('Skipping Esub init! Test flag is set!')
+                self.l.warning('Skipping Esub and chat init! Test flag is set!')
                 break
             await self.initialize_esubs(caster)
+            caster_logins.append(caster.twitch_login)
+            self.votes[caster.steam_id] = Vote(caster, self)
+        chat.join_room(caster_logins)
             
         self.l.passing('Esubs initialized')
         
@@ -559,6 +586,12 @@ class Bot:
            return
         await self.commands[parts[0]]['cli_func']()
             
+    async def start_vote(self, steam_id: str):
+        process2 = threading.Thread(target=self.votes[steam_id].vote())
+        process2.start()
+        
+    async def stop_vote(self, steam_id:str):
+        target=self.votes[steam_id].isRunning = False
         
         
         
@@ -602,6 +635,23 @@ async def login():
 
     return await render_template('login.html')
 
+@app.route('/vote', methods=['POST'])
+async def receive_vote():
+    try:
+        # Assuming the incoming data is in JSON format
+        data = await request.get_json()
+        print("Received JSON data:", data)
+        
+        if data["Vote"] == "Start":
+            await bot.start_vote(data["SteamId"])
+        if data["Vote"] == "Stop":
+            await bot.stop_vote(data["SteamId"])
+        # Handle the data as needed
+
+        return "Data received successfully", 200
+    except Exception as e:
+        print("Error processing the request:", str(e))
+        return "Error processing the request", 500
 
 @app.route('/login/confirm')
 async def login_confirm():
