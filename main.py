@@ -449,7 +449,7 @@ class Bot:
             choice = 4
         if choice != 0:
             self.l.info(f"Choice from {data.user.display_name} is {choice}")
-            for vote in self.votes.values:
+            for vote in self.votes.values():
                 if data.room == vote.broadcaster.twitch_login and vote.vote_on_going and not data.user.id in vote.voted:
                     vote.voted.append(data.user.id)
                     vote.register_vote(choice)
