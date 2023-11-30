@@ -40,14 +40,14 @@ class Password:
 
 class Bot:
     TARGET_SCOPE: []
+    twitch: Twitch
+    auth: UserAuthenticator
     registered_ids: ID_Queue
     passwords: [Password]
     esub: EventSubWebhook
     broadcasters: [Broadcaster]
     chat: Chat
     votes: dict
-    twitch: Twitch
-    auth: UserAuthenticator
     
     def __init__(self, app_id, app_secret, endpoint, user_name, server_name, auth_url, webhook_url, webhook_port, test = False) -> None:
         self.passwords = []
@@ -66,7 +66,8 @@ class Bot:
         AuthScope.CHANNEL_READ_REDEMPTIONS,
         AuthScope.CHANNEL_MANAGE_REDEMPTIONS,
         AuthScope.BITS_READ,
-        AuthScope.CHANNEL_READ_SUBSCRIPTIONS
+        AuthScope.CHANNEL_READ_SUBSCRIPTIONS,
+        AuthScope.CHAT_READ
         ]
         self.registered_ids = ID_Queue()
         self.broadcasters = []
@@ -446,6 +447,7 @@ class Bot:
         if data.text == "4":
             choice = 4
         if choice != 0:
+            self.l.info(f"Choice from {data.user.display_name} is {choice}")
             for vote in self.votes.values:
                 if data.room == vote.broadcaster.twitch_login and vote.vote_on_going and not data.user.id in vote.voted:
                     vote.voted.append(data.user.id)
@@ -521,6 +523,13 @@ class Bot:
                 
         return reffed_casters
     
+    async def on_ready(self,ready_event: EventData):
+        caster_logins = []
+        for caster in self.broadcasters:
+            caster_logins.append(caster.twitch_login)
+            self.votes[caster.steam_id] = Vote(caster, self.l, self.endpoint)
+        self.chat.join_room(caster_logins)
+    
     async def run(self):
         
         if not os.path.exists('data'):
@@ -543,12 +552,17 @@ class Bot:
         self.l.passingblue("App inital login successful")
         self.l.passingblue("Welcome home Chief!")
         
-        chat = Chat(self.twitch)
         self.esub = EventSubWebhook(self.webhook_url, self.webhook_port, self.twitch)
         await self.esub.unsubscribe_all() # unsub, other wise stuff breaky
         self.esub.start()
         
         self.user = await first(self.twitch.get_users(logins=self.user_name))
+        self.chat = await Chat(self.twitch)
+        self.chat.register_event(ChatEvent.MESSAGE, self.on_message_typed)
+        self.chat.register_event(ChatEvent.READY, self.on_ready)
+        
+        self.chat.start()
+        
         await self.load_broadcasters()
         caster_logins = []
         for caster in self.broadcasters:
@@ -558,7 +572,7 @@ class Bot:
             await self.initialize_esubs(caster)
             caster_logins.append(caster.twitch_login)
             self.votes[caster.steam_id] = Vote(caster, self.l, self.endpoint)
-        chat.join_room(caster_logins)
+        self.chat.join_room(caster_logins)
             
         self.l.passing('Esubs initialized')
         
@@ -671,6 +685,7 @@ async def login_confirm():
         if bot.await_login:
             await bot.twitch.set_user_authentication(token, bot.TARGET_SCOPE, refresh)
             ret_val += "Welcome home chief! "
+            bot.await_login = False
             
         user_info = await first(bot.twitch.get_users())
         name = user_info.login
@@ -682,10 +697,10 @@ async def login_confirm():
             return f'{e}, please delete the TTV2BBR redeems and try again'
        
         if redeem_ids == None:
-            return f'No redeem was initialized, please contact a server admin', 500
+            return f' No redeem was initialized, please contact a server admin', 500
             
         if len(redeem_ids) < 1:
-            ret_val += f'No redeem was initialized, as they already exist. '
+            ret_val += f' No redeem was initialized, as they already exist. '
             
         if not bot.await_login:
             caster = await bot.find_caster(twitch_id=user_info.id)
@@ -698,7 +713,7 @@ async def login_confirm():
     except TwitchAPIException as e:
         return 'Failed to generate auth token', 500
     
-    bot.await_login = False
+    
     return ret_val
 
 def main():
