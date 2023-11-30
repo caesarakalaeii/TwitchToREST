@@ -656,7 +656,7 @@ async def login():
 
 @app.route('/vote', methods=['POST'])
 async def receive_vote():
-    bot.l.info(request.data)
+    bot.l.info(await request.data)
     try:
         data = await request.get_json()
         # Assuming the incoming data is in JSON format
