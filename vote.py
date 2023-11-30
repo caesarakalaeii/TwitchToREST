@@ -47,6 +47,7 @@ class Vote:
                 if(datetime.datetime.now() - vote_start >= datetime.timedelta(seconds=30)):  # time to vote
                     self.end_vote()
             await asyncio.sleep(120) # time till next vote
+        self.l.info(f'Voting stopped for {self.broadcaster.twitch_login} {self.isRunning}')
         
         
     async def update_vote(self, time:int):
