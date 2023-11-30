@@ -38,15 +38,17 @@ class Vote:
     async def vote(self):
         self.l.info(f'Voting enabled for {self.broadcaster.twitch_login} {self.isRunning}')
         while(self.isRunning):
-            self.l.info(f'Vote Starting')
+            await asyncio.sleep(2)
+            self.l.info(f'Vote for {self.broadcaster.twitch_login} Started, waiting on spawn')
             vote_start = datetime.datetime.now()
             while(self.vote_on_going):
                 await asyncio.sleep(2)
-                self.l.info(f'Vote Updating')   
+                self.l.info(f'Vote for {self.broadcaster.twitch_login} Updating')   
                 await self.update_vote((datetime.datetime.now() - vote_start).total_seconds())
                 if(datetime.datetime.now() - vote_start >= datetime.timedelta(seconds=30)):  # time to vote
                     self.end_vote()
-            await asyncio.sleep(120) # time till next vote
+                    
+                    await asyncio.sleep(120) # time till next vote
         self.l.info(f'Voting stopped for {self.broadcaster.twitch_login} {self.isRunning}')
         
         

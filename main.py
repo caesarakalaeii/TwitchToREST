@@ -599,15 +599,20 @@ class Bot:
            return
         await self.commands[parts[0]]['cli_func']()
             
-    async def start_vote(self, steam_id: str):
+    async def init_vote(self, steam_id: str):
         if self.votes[steam_id].isRunning:
-            self.l.info(f'Vote Already on going thread')
+            self.l.info(f'Vote Already started a thread')
             return
         
         self.l.info(f'Starting new Vote thread')
         self.votes[steam_id].isRunning = True
         loop_task = asyncio.create_task(self.votes[steam_id].vote())
         
+    async def start_vote(self, steam_id: str):
+        if self.votes[steam_id].vote_on_going:
+            self.l.info(f'Vote Already on going')
+            return
+        self.votes[steam_id].vote_on_going = True
         
     async def stop_vote(self, steam_id:str):
         self.votes[steam_id].isRunning = False
@@ -662,6 +667,8 @@ async def receive_vote():
         # Assuming the incoming data is in JSON format
         bot.l.info(f'Got Data for vote {data}')
         
+        if data["Vote"] == "Init":
+            await bot.init_vote(data["SteamId"])
         if data["Vote"] == "Start":
             await bot.start_vote(data["SteamId"])
         if data["Vote"] == "Stop":
