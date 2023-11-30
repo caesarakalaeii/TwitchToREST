@@ -488,10 +488,10 @@ class Bot:
             
         try:
             await self.register_broadcaster(caster.steam_id)
-            await self.chat.join_room(caster.twitch_login)
         except:
             return f'Server {self.server_name} is unresponsive, please try again later or contact an admin'
         
+        await self.chat.join_room(caster.twitch_login)
         return f'Sucessfully registered at {self.server_name}'
    
     async def load_broadcasters(self):
