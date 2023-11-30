@@ -605,7 +605,7 @@ class Bot:
             return
         
         self.l.info(f'Starting new Vote thread')
-        
+        self.votes[steam_id].isRunning = True
         loop_task = asyncio.create_task(self.votes[steam_id].vote())
         
         
