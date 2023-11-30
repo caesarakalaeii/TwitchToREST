@@ -38,6 +38,7 @@ class Vote:
     
     async def vote(self):
         self.l.info(f'Voting enabled for {self.broadcaster.twitch_login} {self.isRunning}')
+        self.reset_choices()
         while(self.isRunning):
             await asyncio.sleep(2)
             self.l.info(f'Vote for {self.broadcaster.twitch_login} Started, waiting on spawn')
