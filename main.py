@@ -546,7 +546,7 @@ class Bot:
         while(self.await_login):
             try:
                 self.l.info("App awaiting inital login")
-                time.sleep(3)
+                time.sleep(1)
             except:
                 self.l.fail("Keyboard Interrupt, exiting") #not actually working
                 raise KeyboardInterrupt("User specified shutdown")
