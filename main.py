@@ -604,7 +604,7 @@ class Bot:
         process2.start()
         
     async def stop_vote(self, steam_id:str):
-        target=self.votes[steam_id].isRunning = False
+        self.votes[steam_id].isRunning = False
         
         
         

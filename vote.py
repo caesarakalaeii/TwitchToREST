@@ -19,6 +19,7 @@ class Vote:
         self.l = l
         self.isRunning = False
         self.choice = []
+        self.voted = []
         self.vote_on_going = False
         self.endpoint = endpoint
         
@@ -31,6 +32,7 @@ class Vote:
         self.choice[1] = 0
         self.choice[2] = 0
         self.choice[3] = 0
+        self.voted = []
     
     async def vote(self):
         while(self.isRunning):
