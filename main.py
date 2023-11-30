@@ -533,7 +533,6 @@ class Bot:
             await bot.add_pw(pw, ref)
         twitch = await Twitch(self.__app_id, self.__app_secret)
         auth = UserAuthenticator(twitch, self.TARGET_SCOPE, url=self.auth_url)
-        chat = Chat(twitch)
         while(self.await_login):
             try:
                 self.l.info("App awaiting inital login")
@@ -543,6 +542,7 @@ class Bot:
                 raise KeyboardInterrupt("User specified shutdown")
         self.l.passingblue("App inital login successful")
         self.l.passingblue("Welcome home Chief!")
+        chat = Chat(twitch)
         
         self.esub = EventSubWebhook(self.webhook_url, self.webhook_port, twitch)
         await self.esub.unsubscribe_all() # unsub, other wise stuff breaky
