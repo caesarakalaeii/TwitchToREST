@@ -43,6 +43,7 @@ class Bot:
     twitch: Twitch
     auth: UserAuthenticator
     registered_ids: ID_Queue
+    user: TwitchUser
     passwords: [Password]
     esub: EventSubWebhook
     broadcasters: [Broadcaster]
@@ -551,12 +552,12 @@ class Bot:
                 raise KeyboardInterrupt("User specified shutdown")
         self.l.passingblue("App inital login successful")
         self.l.passingblue("Welcome home Chief!")
+        self.user = await first(self.twitch.get_users(logins=self.user_name))
         
         self.esub = EventSubWebhook(self.webhook_url, self.webhook_port, self.twitch)
         await self.esub.unsubscribe_all() # unsub, other wise stuff breaky
         self.esub.start()
         
-        self.user = await first(self.twitch.get_users(logins=self.user_name))
         self.chat = await Chat(self.twitch)
         self.chat.register_event(ChatEvent.MESSAGE, self.on_message_typed)
         self.chat.register_event(ChatEvent.READY, self.on_ready)
