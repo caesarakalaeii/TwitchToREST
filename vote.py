@@ -30,10 +30,9 @@ class Vote:
     
     def reset_choices(self):
         self.l.info(f'Resetting Vote for {self.broadcaster.twitch_login}')
-        self.choice[0] = 0
-        self.choice[1] = 0
-        self.choice[2] = 0
-        self.choice[3] = 0
+        self.choice = []
+        for i in range(4):
+            self.choice.append(0)
         self.voted = []
     
     async def vote(self):
