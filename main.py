@@ -1,6 +1,4 @@
 import os
-import sys
-import threading
 import time
 from events import *
 from logger import Logger
@@ -605,7 +603,7 @@ class Bot:
             return
         
         self.l.info(f'Starting new Vote thread')
-        asyncio.coroutine(self.votes[steam_id].vote())
+        asyncio.create_task(self.votes[steam_id].vote())
         
     
     async def stop_vote(self, steam_id:str):
@@ -724,9 +722,7 @@ async def login_confirm():
     
     return ret_val
 
-def main():
-    asyncio.run(bot.run())
-    
+ 
     
     
 
@@ -735,9 +731,6 @@ if __name__ == '__main__':
     
     
     
-    process2 = threading.Thread(target=main)
+    asyncio.create_task(bot.run())
 
-    
-    process2.start()
-    
     app.run(host='0.0.0.0',port = AUTH_PORT)
