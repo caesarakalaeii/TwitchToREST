@@ -529,7 +529,7 @@ class Bot:
         for caster in self.broadcasters:
             caster_logins.append(caster.twitch_login)
             self.votes[caster.steam_id] = Vote(caster, self.l, self.endpoint)
-        self.chat.join_room(caster_logins)
+        await self.chat.join_room(caster_logins)
     
     async def run(self):
         
@@ -565,15 +565,13 @@ class Bot:
         self.chat.start()
         
         await self.load_broadcasters()
-        caster_logins = []
+        
         for caster in self.broadcasters:
             if self.test:
                 self.l.warning('Skipping Esub and chat init! Test flag is set!')
                 break
             await self.initialize_esubs(caster)
-            caster_logins.append(caster.twitch_login)
-            self.votes[caster.steam_id] = Vote(caster, self.l, self.endpoint)
-        self.chat.join_room(caster_logins)
+            
             
         self.l.passing('Esubs initialized')
         
