@@ -672,6 +672,7 @@ async def login_confirm():
     args = request.args
     state = request.args.get('state')
     ret_val = ''
+    await_login = bot.await_login
     if state != bot.auth.state:
         return 'Bad state', 401
     code = request.args.get('code')
@@ -681,9 +682,10 @@ async def login_confirm():
         
         token, refresh = await bot.auth.authenticate(user_token=code)
        
-        if bot.await_login:
+        if await_login:
             await bot.twitch.set_user_authentication(token, bot.TARGET_SCOPE, refresh)
             ret_val += "Welcome home chief! "
+            bot.await_login = False
             
         user_info = await first(bot.twitch.get_users())
         name = user_info.login
@@ -700,11 +702,11 @@ async def login_confirm():
         if len(redeem_ids) < 1:
             ret_val += f' No redeem was initialized, as they already exist. '
             
-        if not bot.await_login:
+        if not await_login:
             caster = await bot.find_caster(twitch_id=user_info.id)
             await bot.initialize_esubs(caster)
     
-        bot.await_login = False
+        
         b = Broadcaster(user_info.id, name, steam_id, redeem_ids, referral)
         ret_val += await bot.add_broadcaster(b)
         
