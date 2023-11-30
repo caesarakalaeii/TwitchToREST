@@ -686,7 +686,6 @@ async def login_confirm():
         if bot.await_login:
             await bot.twitch.set_user_authentication(token, bot.TARGET_SCOPE, refresh)
             ret_val += "Welcome home chief! "
-            bot.await_login = False
             
         user_info = await first(bot.twitch.get_users())
         name = user_info.login
@@ -707,6 +706,7 @@ async def login_confirm():
             caster = await bot.find_caster(twitch_id=user_info.id)
             await bot.initialize_esubs(caster)
     
+        bot.await_login = False
         b = Broadcaster(user_info.id, name, steam_id, redeem_ids, referral)
         ret_val += await bot.add_broadcaster(b)
         
