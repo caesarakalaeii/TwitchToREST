@@ -137,7 +137,7 @@ class Bot:
     async def stop_cli(self):
         self.l.fail("Stopping!")
         try:
-            await twitch.close()
+            await self.twitch.close()
         except:
             pass
         self.is_running = False
@@ -301,7 +301,7 @@ class Bot:
         for redeem in redeems:
             try:
                 self.l.info(f"Generating redeem: {redeem.title}")
-                custom_redeem = await twitch.create_custom_reward(redeem.broadcaster_id, 
+                custom_redeem = await self.twitch.create_custom_reward(redeem.broadcaster_id, 
                                                                     redeem.title, 
                                                                     redeem.cost, 
                                                                     redeem.prompt, 
@@ -522,7 +522,6 @@ class Bot:
         return reffed_casters
     
     async def run(self):
-        global auth, twitch
         
         if not os.path.exists('data'):
             os.makedirs('data')
@@ -532,8 +531,8 @@ class Bot:
             pw = input('Please input a inital password\n')
             ref = 'Admin'
             await bot.add_pw(pw, ref)
-        twitch = await Twitch(self.__app_id, self.__app_secret)
-        auth = UserAuthenticator(twitch, self.TARGET_SCOPE, url=self.auth_url)
+        self.twitch = await Twitch(self.__app_id, self.__app_secret)
+        self.auth = UserAuthenticator(self.twitch, self.TARGET_SCOPE, url=self.auth_url)
         while(self.await_login):
             try:
                 self.l.info("App awaiting inital login")
@@ -544,12 +543,12 @@ class Bot:
         self.l.passingblue("App inital login successful")
         self.l.passingblue("Welcome home Chief!")
         
-        chat = Chat(twitch)
-        self.esub = EventSubWebhook(self.webhook_url, self.webhook_port, twitch)
+        chat = Chat(self.twitch)
+        self.esub = EventSubWebhook(self.webhook_url, self.webhook_port, self.twitch)
         await self.esub.unsubscribe_all() # unsub, other wise stuff breaky
         self.esub.start()
         
-        self.user = await first(twitch.get_users(logins=self.user_name))
+        self.user = await first(self.twitch.get_users(logins=self.user_name))
         await self.load_broadcasters()
         caster_logins = []
         for caster in self.broadcasters:
@@ -631,7 +630,7 @@ async def login():
 
         if steam_id.isdigit() and pbkdf2_sha256.verify(password + valid_salt, valid_password_hash):
             await bot.register_id(steam_id, ref)
-            return redirect(auth.return_auth_url())
+            return redirect(bot.auth.return_auth_url())
         else:
             return "Invalid username or password. Please try again."
 
@@ -673,7 +672,7 @@ async def login_confirm():
             await bot.twitch.set_user_authentication(token, bot.TARGET_SCOPE, refresh)
             ret_val += "Welcome home chief! "
             
-        user_info = await first(twitch.get_users())
+        user_info = await first(bot.twitch.get_users())
         name = user_info.login
         steam_id, referral = await bot.resolve_id()
         
