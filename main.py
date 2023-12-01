@@ -614,6 +614,9 @@ class Bot:
         if self.votes[steam_id].vote_on_going:
             self.l.info(f'Vote Already on going')
             return
+        if not self.votes[steam_id].isRunning:
+            self.l.info(f'Vote not running, starting')
+            await self.init_vote(steam_id)
         self.votes[steam_id].vote_on_going = True
         
     async def stop_vote(self, steam_id:str):
