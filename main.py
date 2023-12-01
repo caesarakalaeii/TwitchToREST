@@ -451,6 +451,9 @@ class Bot:
         if choice != 0:
             self.l.info(f"Choice from {data.user.display_name} is {choice}")
             caster: Broadcaster = await self.find_caster(twitch_id=data.room)
+            self.l.info(f"Room is {data.room}, Caster ID is {caster.steam_id}")
+            self.l.info(f"K:{self.votes.keys()} V:{self.votes.items()}")
+            
             vote: Vote = self.votes[caster.steam_id]
             if vote.vote_on_going and not data.user.id in vote.voted:
                 self.l.info(f"Choice will be registered")
