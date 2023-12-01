@@ -254,8 +254,9 @@ class Bot:
     async def register_broadcaster(self, steam_id:str):
         caster:Broadcaster = await self.find_caster(steam_id = steam_id)
         d = caster.to_dict(False)
-        self.votes[caster.steam_id] = Vote(caster, self.l, self.endpoint)
         d.update({'EventType':'AddBroadcaster'})
+        if not steam_id in self.votes.keys():
+            self.votes[caster.steam_id] = Vote(caster, self.l, self.endpoint)
         return await self.REST_post(d)
     
     async def unregister_broadcaster(self, caster : Broadcaster):
@@ -493,6 +494,7 @@ class Bot:
             return f'Server {self.server_name} is unresponsive, please try again later or contact an admin'
         
         await self.chat.join_room(caster.twitch_login)
+        
         return f'Sucessfully registered at {self.server_name}'
    
     async def load_broadcasters(self):
