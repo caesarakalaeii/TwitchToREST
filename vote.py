@@ -55,8 +55,9 @@ class Vote:
 
                 if remaining_time <= 0:  # time to vote
                     await self.end_vote()
+                    self.vote_on_going = False
                     await asyncio.sleep(120)  # time till next vote
-
+            self.vote_on_going = True # resetting vote
         self.l.info(f'Voting stopped for {self.broadcaster.twitch_login} {self.isRunning}')
         
         
