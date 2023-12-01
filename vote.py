@@ -47,7 +47,7 @@ class Vote:
             while self.vote_on_going:
                 await asyncio.sleep(1)
                 elapsed_time = asyncio.get_event_loop().time() - vote_start
-                remaining_time = max(0, 30 - elapsed_time)
+                remaining_time = max(0, 90 - elapsed_time)
 
                 self.l.info(f'Vote for {self.broadcaster.twitch_login} Updating')
                 await self.update_vote(math.floor(remaining_time))
