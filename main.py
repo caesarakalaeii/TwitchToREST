@@ -455,10 +455,10 @@ class Bot:
             self.l.info(f"K:{self.votes.keys()} V:{self.votes.items()}")
             
             vote: Vote = self.votes[caster.steam_id]
-            if vote.vote_on_going and not data.user.id in vote.voted:
+            if vote.vote_on_going:
                 self.l.info(f"Choice will be registered")
-                vote.voted.append(data.user.id)
-                vote.register_vote(choice)
+                
+                vote.register_vote(choice, data.user.id)
                 
     
     async def remove_broadcaster(self, caster_name:str = None, caster_id:str = None):

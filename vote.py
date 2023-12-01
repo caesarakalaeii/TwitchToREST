@@ -103,6 +103,11 @@ class Vote:
             return f'Error updating Vote for {self.broadcaster.twitch_login}({self.broadcaster.steam_id})'
         
     
-    async def register_vote(self, choice:int):
+    async def register_vote(self, choice:int, user_id):
         self.l.passing("Registering Vote")
-        self.choice[choice-1] = self.choice[choice-1]+1
+        if not user_id in self.voted:
+            self.voted.append(user_id)
+            self.choice[choice-1] = self.choice[choice-1]+1
+        else: 
+            self.l.passing("User already voted")
+            
