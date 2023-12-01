@@ -453,6 +453,7 @@ class Bot:
             caster: Broadcaster = await self.find_caster(twitch_id=data.room)
             vote: Vote = self.votes[caster.steam_id]
             if vote.vote_on_going and not data.user.id in vote.voted:
+                self.l.info(f"Choice will be registered")
                 vote.voted.append(data.user.id)
                 vote.register_vote(choice)
                 

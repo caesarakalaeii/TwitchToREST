@@ -105,4 +105,4 @@ class Vote:
     
     async def register_vote(self, choice:int):
         self.l.passing("Registering Vote")
-        self.choice[choice] = self.choice[choice]+1
+        self.choice[choice-1] = self.choice[choice-1]+1
