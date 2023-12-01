@@ -42,7 +42,6 @@ class Vote:
         while self.isRunning:
             await asyncio.sleep(2)
             self.l.info(f'Vote for {self.broadcaster.twitch_login} Started, waiting on spawn')
-
             vote_start = asyncio.get_event_loop().time()
 
             while self.vote_on_going:
@@ -55,9 +54,7 @@ class Vote:
 
                 if remaining_time <= 0:  # time to vote
                     await self.end_vote()
-                    self.vote_on_going = False
                     await asyncio.sleep(120)  # time till next vote
-            self.vote_on_going = True # resetting vote
         self.l.info(f'Voting stopped for {self.broadcaster.twitch_login} {self.isRunning}')
         
         
