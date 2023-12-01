@@ -450,8 +450,8 @@ class Bot:
             choice = 4
         if choice != 0:
             self.l.info(f"Choice from {data.user.display_name} is {choice}")
-            caster: Broadcaster = await self.find_caster(twitch_id=data.room)
-            self.l.info(f"Room is {data.room}, Caster ID is {caster.steam_id}")
+            caster: Broadcaster = await self.find_caster(twitch_id=data.room.name)
+            self.l.info(f"Room is {data.room.name}, Caster ID is {caster.steam_id}")
             self.l.info(f"K:{self.votes.keys()} V:{self.votes.items()}")
             
             vote: Vote = self.votes[caster.steam_id]
