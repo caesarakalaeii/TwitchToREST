@@ -449,10 +449,11 @@ class Bot:
             choice = 4
         if choice != 0:
             self.l.info(f"Choice from {data.user.display_name} is {choice}")
-            for vote in self.votes.values():
-                if data.room == vote.broadcaster.twitch_login and vote.vote_on_going and not data.user.id in vote.voted:
-                    vote.voted.append(data.user.id)
-                    vote.register_vote(choice)
+            caster: Broadcaster = await self.find_caster(twitch_id=data.room)
+            vote: Vote = self.votes[caster.steam_id]
+            if vote.vote_on_going and not data.user.id in vote.voted:
+                vote.voted.append(data.user.id)
+                vote.register_vote(choice)
                 
     
     async def remove_broadcaster(self, caster_name:str = None, caster_id:str = None):

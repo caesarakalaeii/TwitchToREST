@@ -103,4 +103,5 @@ class Vote:
         
     
     async def register_vote(self, choice:int):
-        self.choice[choice] += 1
+        self.l.info("Registering Vote")
+        self.choice[choice] = self.choice[choice]+1
