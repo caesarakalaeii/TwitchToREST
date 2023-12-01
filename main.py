@@ -607,6 +607,10 @@ class Bot:
         await self.commands[parts[0]]['cli_func']()
             
     async def init_vote(self, steam_id: str):
+        if self.votes[steam_id].vote_on_going:
+            self.l.info(f'Vote Already on going, stopping')
+            self.votes[steam_id].vote_on_going = False
+            return
         if self.votes[steam_id].isRunning:
             self.l.info(f'Vote Already started a thread, restarting')
             self.votes[steam_id].isRunning = False
