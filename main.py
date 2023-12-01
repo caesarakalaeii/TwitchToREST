@@ -458,7 +458,7 @@ class Bot:
             if vote.vote_on_going:
                 self.l.info(f"Choice will be registered")
                 
-                vote.register_vote(choice, data.user.id)
+                await vote.register_vote(choice, data.user.id)
                 
     
     async def remove_broadcaster(self, caster_name:str = None, caster_id:str = None):
