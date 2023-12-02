@@ -49,8 +49,6 @@ class Bot:
     broadcasters: [Broadcaster]
     chat: Chat
     votes: dict
-    bot_id: str
-    bot_name: str
     
     def __init__(self, app_id, app_secret, endpoint, user_name, server_name, auth_url, webhook_url, webhook_port, test = False) -> None:
         self.passwords = []
@@ -349,7 +347,7 @@ class Bot:
             return
         try:
             self.l.info(f'Initializing follow esub for {broadcaster.twitch_login}')
-            await self.esub.listen_channel_follow_v2(broadcaster.twitch_id, self.bot_id, self.on_follow)
+            await self.esub.listen_channel_follow_v2(broadcaster.twitch_id, self.broadcasters[0].twitch_id, self.on_follow)
         except TwitchAPIException as e:
             if f'{e}' == 'subscription already exists':
                 pass
