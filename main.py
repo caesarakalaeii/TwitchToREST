@@ -771,6 +771,7 @@ async def receive_vote():
 
 @app.route('/login/confirm')
 async def login_confirm():
+    global bot
     
     state = request.args.get('state')
     ret_val = ''
@@ -844,6 +845,7 @@ async def login_confirm():
     return ret_val
 
 def main():
+    global bot
     asyncio.run(bot.run())
     
     
