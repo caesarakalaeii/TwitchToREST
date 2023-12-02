@@ -786,7 +786,8 @@ async def login_confirm():
         if await_login:
             bot.bot_id = f'{user_info.id}'
             bot.bot_name = f'{user_info.login}'
-            ret_val += "Welcome home chief!"
+            ret_val += f"Welcome home chief! {user_info.login}({user_info.id})"
+            bot.l.passing(f"Welcome home chief! {user_info.login}({user_info.id})")
             bot.await_login = False
             return ret_val
         
