@@ -799,6 +799,8 @@ async def login_confirm():
             except:
                 bot.l.error(f"Error modding myself: {e}")
                 pass
+        else:
+            bot.l.passing(f'Already mod in channel {name}')
         ##await bot.twitch.set_user_authentication(bot.auth_token, bot.TARGET_SCOPE, bot.refresh_token)
         try:
             redeem_ids = await bot.generate_redeems(user_info.id)
