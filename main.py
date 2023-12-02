@@ -554,7 +554,9 @@ class Bot:
         # Now open the file and write the updated data
         with open(file_path, 'w') as file:
             json.dump(await self.broadcasters_to_list(), file)
-            
+          
+        if caster.steam_id == 1:
+            return  'Added default caster'
         try:
             await self.register_broadcaster(caster.steam_id)
         except Exception as e:
