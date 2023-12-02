@@ -49,8 +49,7 @@ class Bot:
     broadcasters: [Broadcaster]
     chat: Chat
     votes: dict
-    auth_token: str
-    refresh_token: str
+    bot_id: str
     
     def __init__(self, app_id, app_secret, endpoint, user_name, server_name, auth_url, webhook_url, webhook_port, test = False) -> None:
         self.passwords = []
@@ -781,22 +780,20 @@ async def login_confirm():
         
         token, refresh = await bot.auth.authenticate(user_token=code)
        
+        await bot.twitch.set_user_authentication(token, bot.TARGET_SCOPE, refresh)  
+        user_info = await first(bot.twitch.get_users())
         if await_login:
-            await bot.twitch.set_user_authentication(token, bot.TARGET_SCOPE, refresh)  
-            bot.auth_token = token
-            bot.refresh_token = refresh
-            ret_val += "Welcome home chief! "
+            bot.bot_id = user_info.id
+            ret_val += "Welcome home chief!"
             bot.await_login = False
-            await asyncio.sleep(5)
             return ret_val
         
-        user_info = await first(bot.twitch.get_users())
         name = user_info.login#
         bot.l.info(f'name is {name}')
         steam_id, referral = await bot.resolve_id()
         if not bot.chat.is_mod(name):
             try:
-                await bot.twitch.add_channel_moderator(user_info.id, bot.user.id) # makes yourself channel Mod so later esubs will succeed
+                await bot.twitch.add_channel_moderator(user_info.id, bot.bot_id) # makes yourself channel Mod so later esubs will succeed
             except Exception as e:
                 if f'{e}' == 'Bad Request - user is already a mod': 
                     bot.l.passing(f'User {bot.user.login} is already Modded in channel {name}')
