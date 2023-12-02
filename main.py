@@ -798,6 +798,9 @@ async def login_confirm():
             bot.await_login = False
             return ret_val
         
+        for caster in bot.broadcasters:
+            bot.l.info(f'{caster.twitch_login}')
+        
         name = user_info.login
         bot.l.info(f'name is {name}')
         steam_id, referral = await bot.resolve_id()
