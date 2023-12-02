@@ -732,13 +732,14 @@ async def login_confirm():
         if len(redeem_ids) < 1:
             ret_val += f' No redeem was initialized, as they already exist. '
             
+        b = Broadcaster(user_info.id, name, steam_id, redeem_ids, referral)
+        ret_val += await bot.add_broadcaster(b)
+        
         if not await_login:
             caster = await bot.find_caster(twitch_id=user_info.id)
             await bot.initialize_esubs(caster)
     
         
-        b = Broadcaster(user_info.id, name, steam_id, redeem_ids, referral)
-        ret_val += await bot.add_broadcaster(b)
         
         
     except TwitchAPIException as e:
