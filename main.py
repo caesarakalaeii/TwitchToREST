@@ -643,13 +643,16 @@ class Bot:
             if self.test:
                 self.l.warning('Skipping Esub and chat init! Test flag is set!')
                 break
+            if caster.steam_id == 1:
+                continue
             # if not self.chat.is_mod(caster.twitch_login):
             #    self.l.warning(f'Not Mod in {caster.twitch_login}, deleting.')
             #    await self.remove_broadcaster(caster_name= caster.twitch_login)
             else:
                 try:
                     await self.initialize_esubs(caster)
-                except:
+                except Exception as e:
+                    self.l.error(f'Failed to init esub(653) {e}')
                     await self.remove_broadcaster(caster_name=caster.twitch_login)
             
             
