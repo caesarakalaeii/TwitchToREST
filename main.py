@@ -785,8 +785,7 @@ async def login_confirm():
         await bot.twitch.set_user_authentication(token, bot.TARGET_SCOPE, refresh)  
         user_info = await first(bot.twitch.get_users())
         if await_login:
-            bot.bot_id = f'{user_info.id}'
-            bot.bot_name = f'{user_info.login}'
+            caster:Broadcaster = Broadcaster(user_info.id, user_info.login, 1, {}, 'Admin')
             ret_val += f"Welcome home chief! {user_info.login}({user_info.id})"
             bot.l.passing(f"Welcome home chief! {user_info.login}({user_info.id})")
             bot.await_login = False
@@ -795,14 +794,14 @@ async def login_confirm():
         name = user_info.login
         bot.l.info(f'name is {name}')
         steam_id, referral = await bot.resolve_id()
-        bot.l.passing(f"Bot is {user_info.login}({user_info.id})")
+        bot.l.passing(f"Bot is {bot.broadcasters[1].twitch_login}({bot.broadcasters[1].twitch_id})")
         
         if not bot.chat.is_mod(name):
             try:
-                await bot.twitch.add_channel_moderator(user_info.id, bot.bot_id) # makes yourself channel Mod so later esubs will succeed
+                await bot.twitch.add_channel_moderator(user_info.id, bot.broadcasters[1].twitch_id) # makes yourself channel Mod so later esubs will succeed
             except Exception as e:
                 if f'{e}' == 'Bad Request - user is already a mod': 
-                    bot.l.passing(f'User {bot.user_name} is already Modded in channel {name}')
+                    bot.l.passing(f'User {bot.broadcasters[1].twitch_login} is already Modded in channel {name}')
                     pass
                 bot.l.error(f"Error modding myself: {e}")
                 pass
