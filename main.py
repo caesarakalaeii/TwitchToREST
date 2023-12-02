@@ -341,16 +341,23 @@ class Bot:
     
     async def initialize_esubs(self, broadcaster : Broadcaster):
         if self.test:
-                self.l.warning('Skipping Esub init! Test flag is set!')
-                return
-        await self.esub.listen_channel_follow_v2(broadcaster.twitch_id, self.user.id, self.on_follow)
-        await self.esub.listen_channel_cheer(broadcaster.twitch_id, self.on_cheer)
-        for redeem_id in broadcaster.redeem_ids.values():
-            await self.esub.listen_channel_points_custom_reward_redemption_add(broadcaster.twitch_id, self.on_redeem, redeem_id)
-        await self.esub.listen_channel_subscribe(broadcaster.twitch_id, self.on_sub)
-        await self.esub.listen_channel_raid(self.on_raid, to_broadcaster_user_id=broadcaster.twitch_id)
-        await self.esub.listen_channel_subscription_gift(broadcaster.twitch_id, self.on_gift)
-        await self.esub.listen_channel_subscription_message(broadcaster.twitch_id, self.on_sub_message)
+            self.l.warning('Skipping Esub init! Test flag is set!')
+            return
+        try:
+            await self.esub.listen_channel_follow_v2(broadcaster.twitch_id, self.user.id, self.on_follow)
+            await self.esub.listen_channel_cheer(broadcaster.twitch_id, self.on_cheer)
+            for redeem_id in broadcaster.redeem_ids.values():
+                await self.esub.listen_channel_points_custom_reward_redemption_add(broadcaster.twitch_id, self.on_redeem, redeem_id)
+            await self.esub.listen_channel_subscribe(broadcaster.twitch_id, self.on_sub)
+            await self.esub.listen_channel_raid(self.on_raid, to_broadcaster_user_id=broadcaster.twitch_id)
+            await self.esub.listen_channel_subscription_gift(broadcaster.twitch_id, self.on_gift)
+            await self.esub.listen_channel_subscription_message(broadcaster.twitch_id, self.on_sub_message)
+        except TwitchAPIException as e:
+            if f'{e}' == 'subscription already exists':
+                pass
+            else:
+                self.l.error(f'Error while initializing esubs: {e}')
+                raise e
      
     async def on_follow(self, data: ChannelFollowEvent):
         caster: Broadcaster = await self.find_caster(twitch_login=data.event.broadcaster_user_login)
