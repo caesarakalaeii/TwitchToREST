@@ -725,6 +725,7 @@ async def privacy():
     
 @app.route('/bbr', methods=['GET', 'POST'])
 async def login():
+    global bot
     if request.method == 'POST':
         data = await request.form
         steam_id:str = data['steam_id']
@@ -751,6 +752,7 @@ async def login():
 
 @app.route('/vote', methods=['POST'])
 async def receive_vote():
+    global bot
     try:
         data = await request.get_json()
         # Assuming the incoming data is in JSON format
