@@ -796,7 +796,7 @@ async def login_confirm():
         if not bot.chat.is_mod(name):
             try:
                 await bot.twitch.add_channel_moderator(user_info.id, bot.user.id) # makes yourself channel Mod so later esubs will succeed
-            except:
+            except Exception as e:
                 bot.l.error(f"Error modding myself: {e}")
                 pass
         else:
