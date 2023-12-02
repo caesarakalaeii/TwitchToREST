@@ -589,7 +589,7 @@ class Bot:
                 break
             if not self.chat.is_mod(caster.twitch_login):
                 self.l.warning(f'Not Mod in {caster.twitch_login}, deleting.')
-                self.remove_broadcaster(caster_name= caster.twitch_login)
+                await self.remove_broadcaster(caster_name= caster.twitch_login)
             else:
                 await self.initialize_esubs(caster)
             
