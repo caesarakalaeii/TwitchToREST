@@ -800,6 +800,7 @@ async def login_confirm():
             except Exception as e:
                 if f'{e}' == 'Bad Request - user is already a mod': 
                     bot.l.passing(f'User {bot.user.id} is already Modded in channel {name}')
+                    pass
                 bot.l.error(f"Error modding myself: {e}")
                 pass
         else:
