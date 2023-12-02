@@ -781,8 +781,8 @@ async def login_confirm():
         
         token, refresh = await bot.auth.authenticate(user_token=code)
        
-        await bot.twitch.set_user_authentication(token, bot.TARGET_SCOPE, refresh)
         if await_login:
+            await bot.twitch.set_user_authentication(token, bot.TARGET_SCOPE, refresh)  
             bot.auth_token = token
             bot.refresh_token = refresh
             ret_val += "Welcome home chief! "
@@ -799,7 +799,7 @@ async def login_confirm():
                 await bot.twitch.add_channel_moderator(user_info.id, bot.user.id) # makes yourself channel Mod so later esubs will succeed
             except Exception as e:
                 if f'{e}' == 'Bad Request - user is already a mod': 
-                    bot.l.passing(f'User is already Modded in channel {name}')
+                    bot.l.passing(f'User {bot.user.id} is already Modded in channel {name}')
                 bot.l.error(f"Error modding myself: {e}")
                 pass
         else:
