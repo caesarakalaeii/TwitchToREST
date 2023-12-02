@@ -786,8 +786,10 @@ async def login_confirm():
         user_info = await first(bot.twitch.get_users())
         if await_login:
             caster:Broadcaster = Broadcaster(user_info.id, user_info.login, 1, {}, 'Admin')
+            await bot.add_broadcaster(caster)
             ret_val += f"Welcome home chief! {user_info.login}({user_info.id})"
             bot.l.passing(f"Welcome home chief! {user_info.login}({user_info.id})")
+            bot.l.passing(f"Bot is {bot.broadcasters[1].twitch_login}({bot.broadcasters[1].twitch_id})")
             bot.await_login = False
             return ret_val
         
