@@ -50,6 +50,7 @@ class Bot:
     chat: Chat
     votes: dict
     bot_id: str
+    bot_name: str
     
     def __init__(self, app_id, app_secret, endpoint, user_name, server_name, auth_url, webhook_url, webhook_port, test = False) -> None:
         self.passwords = []
@@ -348,7 +349,7 @@ class Bot:
             return
         try:
             self.l.info(f'Initializing follow esub for {broadcaster.twitch_login}')
-            await self.esub.listen_channel_follow_v2(broadcaster.twitch_id, self.user.id, self.on_follow)
+            await self.esub.listen_channel_follow_v2(broadcaster.twitch_id, self.bot_id, self.on_follow)
         except TwitchAPIException as e:
             if f'{e}' == 'subscription already exists':
                 pass
@@ -784,11 +785,12 @@ async def login_confirm():
         user_info = await first(bot.twitch.get_users())
         if await_login:
             bot.bot_id = user_info.id
+            bot.bot_name = user_info.login
             ret_val += "Welcome home chief!"
             bot.await_login = False
             return ret_val
         
-        name = user_info.login#
+        name = user_info.login
         bot.l.info(f'name is {name}')
         steam_id, referral = await bot.resolve_id()
         if not bot.chat.is_mod(name):
@@ -796,7 +798,7 @@ async def login_confirm():
                 await bot.twitch.add_channel_moderator(user_info.id, bot.bot_id) # makes yourself channel Mod so later esubs will succeed
             except Exception as e:
                 if f'{e}' == 'Bad Request - user is already a mod': 
-                    bot.l.passing(f'User {bot.user.login} is already Modded in channel {name}')
+                    bot.l.passing(f'User {bot.user_name} is already Modded in channel {name}')
                     pass
                 bot.l.error(f"Error modding myself: {e}")
                 pass
