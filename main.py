@@ -640,7 +640,7 @@ class Bot:
             if self.test:
                 self.l.warning('Skipping Esub and chat init! Test flag is set!')
                 break
-            #if not self.chat.is_mod(caster.twitch_login):
+            # if not self.chat.is_mod(caster.twitch_login):
             #    self.l.warning(f'Not Mod in {caster.twitch_login}, deleting.')
             #    await self.remove_broadcaster(caster_name= caster.twitch_login)
             else:
@@ -793,8 +793,12 @@ async def login_confirm():
         user_info = await first(bot.twitch.get_users())
         name = user_info.login
         steam_id, referral = await bot.resolve_id()
-        #if not bot.chat.is_mod(name):
-        #    await bot.twitch.add_channel_moderator(user_info.id, bot.user.id) # makes yourself channel Mod so later esubs will succeed
+        if not bot.chat.is_mod(name):
+            try:
+                await bot.twitch.add_channel_moderator(user_info.id, bot.user.id) # makes yourself channel Mod so later esubs will succeed
+            except:
+                bot.l.error(f"Error modding myself: {e}")
+                pass
         ##await bot.twitch.set_user_authentication(bot.auth_token, bot.TARGET_SCOPE, bot.refresh_token)
         try:
             redeem_ids = await bot.generate_redeems(user_info.id)
