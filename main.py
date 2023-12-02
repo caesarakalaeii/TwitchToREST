@@ -791,12 +791,15 @@ async def login_confirm():
             return ret_val
         
         user_info = await first(bot.twitch.get_users())
-        name = user_info.login
+        name = user_info.login#
+        bot.l.info(f'name is {name}')
         steam_id, referral = await bot.resolve_id()
         if not bot.chat.is_mod(name):
             try:
                 await bot.twitch.add_channel_moderator(user_info.id, bot.user.id) # makes yourself channel Mod so later esubs will succeed
             except Exception as e:
+                if f'{e}' == 'Bad Request - user is already a mod': 
+                    bot.l.passing(f'User is already Modded in channel {name}')
                 bot.l.error(f"Error modding myself: {e}")
                 pass
         else:
