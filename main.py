@@ -713,6 +713,7 @@ async def receive_vote():
 @app.route('/login/confirm')
 async def login_confirm():
     args = request.args
+    bot.l.info(f'args are: {args}')
     state = request.args.get('state')
     ret_val = ''
     await_login = bot.await_login
@@ -725,9 +726,9 @@ async def login_confirm():
         
         token, refresh = await bot.auth.authenticate(user_token=code)
        
+        await bot.twitch.set_user_authentication(token, bot.TARGET_SCOPE, refresh)
         if await_login:
             ret_val += "Welcome home chief! "
-            await bot.twitch.set_user_authentication(token, bot.TARGET_SCOPE, refresh)
             bot.await_login = False
             await asyncio.sleep(5)
             return ret_val
