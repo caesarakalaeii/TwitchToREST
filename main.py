@@ -348,14 +348,64 @@ class Bot:
             self.l.warning('Skipping Esub init! Test flag is set!')
             return
         try:
-            self.l.info(f'Initializin esub for {broadcaster.twitch_login}')
+            self.l.info(f'Initializing follow esub for {broadcaster.twitch_login}')
             await self.esub.listen_channel_follow_v2(broadcaster.twitch_id, self.user.id, self.on_follow)
+        except TwitchAPIException as e:
+            if f'{e}' == 'subscription already exists':
+                pass
+            else:
+                self.l.error(f'Error while initializing esubs: {e}')
+                raise e
+        try:    
+            self.l.info(f'Initializing cheer esub for {broadcaster.twitch_login}')
             await self.esub.listen_channel_cheer(broadcaster.twitch_id, self.on_cheer)
+        except TwitchAPIException as e:
+            if f'{e}' == 'subscription already exists':
+                pass
+            else:
+                self.l.error(f'Error while initializing esubs: {e}')
+                raise e
+        try:
+            self.l.info(f'Initializing redeem esubs for {broadcaster.twitch_login}')
             for redeem_id in broadcaster.redeem_ids.values():
                 await self.esub.listen_channel_points_custom_reward_redemption_add(broadcaster.twitch_id, self.on_redeem, redeem_id)
+        except TwitchAPIException as e:
+            if f'{e}' == 'subscription already exists':
+                pass
+            else:
+                self.l.error(f'Error while initializing esubs: {e}')
+                raise e
+            
+        try:
+            self.l.info(f'Initializing sub esub for {broadcaster.twitch_login}')
             await self.esub.listen_channel_subscribe(broadcaster.twitch_id, self.on_sub)
+        except TwitchAPIException as e:
+            if f'{e}' == 'subscription already exists':
+                pass
+            else:
+                self.l.error(f'Error while initializing esubs: {e}')
+                raise e
+        try:
+            self.l.info(f'Initializing raid esub for {broadcaster.twitch_login}')
             await self.esub.listen_channel_raid(self.on_raid, to_broadcaster_user_id=broadcaster.twitch_id)
+        except TwitchAPIException as e:
+            if f'{e}' == 'subscription already exists':
+                pass
+            else:
+                self.l.error(f'Error while initializing esubs: {e}')
+                raise e
+        try:
+            self.l.info(f'Initializing gift esub for {broadcaster.twitch_login}')
             await self.esub.listen_channel_subscription_gift(broadcaster.twitch_id, self.on_gift)
+        except TwitchAPIException as e:
+            if f'{e}' == 'subscription already exists':
+                pass
+            else:
+                self.l.error(f'Error while initializing esubs: {e}')
+                raise e
+        try:
+            self.l.info(f'Initializing sub message esub for {broadcaster.twitch_login}')
+            
             await self.esub.listen_channel_subscription_message(broadcaster.twitch_id, self.on_sub_message)
         except TwitchAPIException as e:
             if f'{e}' == 'subscription already exists':
