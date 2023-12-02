@@ -537,6 +537,7 @@ class Bot:
         for c in self.broadcasters:
             if caster.twitch_id == c.twitch_id:
                 known = True
+                self.l.passing(f'Broadcaster {caster.twitch_login} is known')
                 c.redeem_ids.update(caster.redeem_ids)
                 break
         if not known:
@@ -556,8 +557,8 @@ class Bot:
             
         try:
             await self.register_broadcaster(caster.steam_id)
-        except:
-            return f'Server {self.server_name} is unresponsive, please try again later or contact an admin'
+        except Exception as e:
+            return f'Server {self.server_name} is unresponsive, please try again later or contact an admin eith this information: (ln561)ERROR: {e}'
         
         await self.chat.join_room(caster.twitch_login)
         
