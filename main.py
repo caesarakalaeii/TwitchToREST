@@ -713,10 +713,10 @@ async def login_confirm():
        
         if await_login:
             ret_val += "Welcome home chief! "
-            
-        await bot.twitch.set_user_authentication(token, bot.TARGET_SCOPE, refresh)
-        bot.await_login = False
-        await asyncio.sleep(5) #wait for initial init
+            await bot.twitch.set_user_authentication(token, bot.TARGET_SCOPE, refresh)
+            bot.await_login = False
+            await asyncio.sleep(5) #wait for initial init
+        
         user_info = await first(bot.twitch.get_users())
         name = user_info.login
         steam_id, referral = await bot.resolve_id()
@@ -743,7 +743,11 @@ async def login_confirm():
         
         
     except TwitchAPIException as e:
+        bot.l.error(f'{e}')
         return 'Failed to generate auth token', 500
+    
+    except Exception as e:
+        bot.l.error(f'{e}')
     
     
     return ret_val
