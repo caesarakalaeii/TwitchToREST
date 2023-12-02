@@ -558,7 +558,7 @@ class Bot:
         try:
             await self.register_broadcaster(caster.steam_id)
         except Exception as e:
-            return f'Server {self.server_name} is unresponsive, please try again later or contact an admin eith this information: (ln561)ERROR: {e}'
+            return f'Server {self.server_name} is unresponsive, please try again later or contact an admin with this information: (ln561)ERROR: {e}'
         
         await self.chat.join_room(caster.twitch_login)
         
