@@ -784,8 +784,8 @@ async def login_confirm():
         await bot.twitch.set_user_authentication(token, bot.TARGET_SCOPE, refresh)  
         user_info = await first(bot.twitch.get_users())
         if await_login:
-            bot.bot_id = user_info.id
-            bot.bot_name = user_info.login
+            bot.bot_id = f'{user_info.id}'
+            bot.bot_name = f'{user_info.login}'
             ret_val += "Welcome home chief!"
             bot.await_login = False
             return ret_val
