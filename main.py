@@ -794,6 +794,8 @@ async def login_confirm():
         name = user_info.login
         bot.l.info(f'name is {name}')
         steam_id, referral = await bot.resolve_id()
+        bot.l.passing(f"Bot is {user_info.login}({user_info.id})")
+        
         if not bot.chat.is_mod(name):
             try:
                 await bot.twitch.add_channel_moderator(user_info.id, bot.bot_id) # makes yourself channel Mod so later esubs will succeed
