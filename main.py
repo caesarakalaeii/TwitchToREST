@@ -735,7 +735,7 @@ async def login_confirm():
         name = user_info.login
         steam_id, referral = await bot.resolve_id()
         if not bot.chat.is_mod(name):
-            bot.twitch.add_channel_moderator(user_info.id, bot.user.id) # makes yourself channel Mod so later esubs will succeed
+            await bot.twitch.add_channel_moderator(user_info.id, bot.user.id) # makes yourself channel Mod so later esubs will succeed
         try:
             redeem_ids = await bot.generate_redeems(user_info.id)
         except FileExistsError as e:
