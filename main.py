@@ -581,6 +581,7 @@ class Bot:
         
         await self.load_broadcasters()
         
+        
         for caster in self.broadcasters:
             if self.test:
                 self.l.warning('Skipping Esub and chat init! Test flag is set!')
@@ -723,12 +724,13 @@ async def login_confirm():
             ret_val += "Welcome home chief! "
             await bot.twitch.set_user_authentication(token, bot.TARGET_SCOPE, refresh)
             bot.await_login = False
-            await asyncio.sleep(5) #wait for initial init
+            return ret_val
         
         user_info = await first(bot.twitch.get_users())
         name = user_info.login
         steam_id, referral = await bot.resolve_id()
-        
+        if not bot.chat.is_mod():
+            bot.twitch.add_channel_moderator(user_info.id, bot.user.id) # makes yourself channel Mod so later esubs will succeed
         try:
             redeem_ids = await bot.generate_redeems(user_info.id)
         except FileExistsError as e:
