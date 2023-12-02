@@ -475,7 +475,7 @@ class Bot:
             if caster_name == caster.twitch_login or caster_id == caster.steam_id:
                 self.broadcasters.remove(caster)
         try:
-            self.add_broadcaster(self.broadcasters[0])
+            await self.add_broadcaster(self.broadcasters[0])
         except IndexError:
             pass
   
