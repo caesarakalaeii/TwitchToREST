@@ -734,7 +734,7 @@ async def login_confirm():
         user_info = await first(bot.twitch.get_users())
         name = user_info.login
         steam_id, referral = await bot.resolve_id()
-        if not bot.chat.is_mod():
+        if not bot.chat.is_mod(name):
             bot.twitch.add_channel_moderator(user_info.id, bot.user.id) # makes yourself channel Mod so later esubs will succeed
         try:
             redeem_ids = await bot.generate_redeems(user_info.id)
