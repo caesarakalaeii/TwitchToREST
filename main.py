@@ -49,6 +49,8 @@ class Bot:
     broadcasters: [Broadcaster]
     chat: Chat
     votes: dict
+    auth_token: str
+    refresh_token: str
     
     def __init__(self, app_id, app_secret, endpoint, user_name, server_name, auth_url, webhook_url, webhook_port, test = False) -> None:
         self.passwords = []
@@ -60,6 +62,7 @@ class Bot:
         self.webhook_url = webhook_url
         self.webhook_port = webhook_port
         self.user_name = user_name
+        
         self.test = test
         self.l = Logger(True)
         self.TARGET_SCOPE = [
@@ -712,8 +715,7 @@ async def receive_vote():
 
 @app.route('/login/confirm')
 async def login_confirm():
-    args = request.args
-    bot.l.info(f'args are: {args}')
+    
     state = request.args.get('state')
     ret_val = ''
     await_login = bot.await_login
@@ -728,6 +730,8 @@ async def login_confirm():
        
         await bot.twitch.set_user_authentication(token, bot.TARGET_SCOPE, refresh)
         if await_login:
+            bot.auth_token = token
+            bot.refresh_token = refresh
             ret_val += "Welcome home chief! "
             bot.await_login = False
             await asyncio.sleep(5)
@@ -738,6 +742,7 @@ async def login_confirm():
         steam_id, referral = await bot.resolve_id()
         if not bot.chat.is_mod(name):
             await bot.twitch.add_channel_moderator(user_info.id, bot.user.id) # makes yourself channel Mod so later esubs will succeed
+        #await bot.twitch.set_user_authentication(bot.auth_token, bot.TARGET_SCOPE, bot.refresh_token)
         try:
             redeem_ids = await bot.generate_redeems(user_info.id)
         except FileExistsError as e:
