@@ -344,6 +344,7 @@ class Bot:
             self.l.warning('Skipping Esub init! Test flag is set!')
             return
         try:
+            self.l.info(f'Initializin esub for {broadcaster.twitch_login}')
             await self.esub.listen_channel_follow_v2(broadcaster.twitch_id, self.user.id, self.on_follow)
             await self.esub.listen_channel_cheer(broadcaster.twitch_id, self.on_cheer)
             for redeem_id in broadcaster.redeem_ids.values():
