@@ -68,7 +68,8 @@ class Bot:
         AuthScope.CHANNEL_MANAGE_REDEMPTIONS,
         AuthScope.BITS_READ,
         AuthScope.CHANNEL_READ_SUBSCRIPTIONS,
-        AuthScope.CHAT_READ
+        AuthScope.CHAT_READ,
+        AuthScope.CHANNEL_MANAGE_MODERATORS
         ]
         self.registered_ids = ID_Queue()
         self.broadcasters = []
@@ -586,7 +587,11 @@ class Bot:
             if self.test:
                 self.l.warning('Skipping Esub and chat init! Test flag is set!')
                 break
-            await self.initialize_esubs(caster)
+            if not self.chat.is_mod(caster.twitch_login):
+                self.l.warning(f'Not Mod in {caster.twitch_login}, deleting.')
+                self.remove_broadcaster(caster_name= caster.twitch_login)
+            else:
+                await self.initialize_esubs(caster)
             
             
         self.l.passing('Esubs initialized')
