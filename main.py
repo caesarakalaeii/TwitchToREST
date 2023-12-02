@@ -647,7 +647,7 @@ class Bot:
                 try:
                     await self.initialize_esubs(caster)
                 except:
-                    self.remove_broadcaster(caster_name=caster.twitch_login)
+                    await self.remove_broadcaster(caster_name=caster.twitch_login)
             
             
         self.l.passing('Esubs initialized')
@@ -799,7 +799,7 @@ async def login_confirm():
                 await bot.twitch.add_channel_moderator(user_info.id, bot.user.id) # makes yourself channel Mod so later esubs will succeed
             except Exception as e:
                 if f'{e}' == 'Bad Request - user is already a mod': 
-                    bot.l.passing(f'User {bot.user.id} is already Modded in channel {name}')
+                    bot.l.passing(f'User {bot.user.login} is already Modded in channel {name}')
                     pass
                 bot.l.error(f"Error modding myself: {e}")
                 pass
