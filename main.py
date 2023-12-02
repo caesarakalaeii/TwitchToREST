@@ -644,7 +644,10 @@ class Bot:
             #    self.l.warning(f'Not Mod in {caster.twitch_login}, deleting.')
             #    await self.remove_broadcaster(caster_name= caster.twitch_login)
             else:
-                await self.initialize_esubs(caster)
+                try:
+                    await self.initialize_esubs(caster)
+                except:
+                    self.remove_broadcaster(caster_name=caster.twitch_login)
             
             
         self.l.passing('Esubs initialized')
