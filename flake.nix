@@ -20,7 +20,11 @@
   outputs =
     # `...` rather than a closed { self, nixpkgs }: adding a second input later
     # would otherwise fail with "called with unexpected argument 'self'".
-    { nixpkgs, ... }:
+    #
+    # `self` is named because the commands need an anchor. It is the only thing
+    # in scope that knows anything about where this repo's source is; see
+    # rootPreamble.
+    { self, nixpkgs, ... }:
     let
       lib = nixpkgs.lib;
 
@@ -135,6 +139,12 @@
       # Nothing is written twice, so `nix flake show` can never disagree with
       # what `dev-lint` actually runs.
       #
+      # Each entry is { description, text, writes? }. `writes = true` declares
+      # that the verb MUTATES the work tree; the generic machinery then refuses
+      # to run it unless $REPO_ROOT resolved to a real checkout. Declaring it
+      # here, next to the command that does the writing, is the point -- the
+      # alternative is every mutating text re-implementing the same guard.
+      #
       # Fixed house vocabulary -- setup, build, test, lint, fmt, run -- and a
       # verb the repo has no meaning for is OMITTED, because absence is
       # information and a stub that echoes "not applicable" turns the command
@@ -163,6 +173,9 @@
           # this verb to a human. Fixing it means adding a non-interactive path
           # to main.py -- do not paper over it here.
           description = "start the bot + auth server -- INTERACTIVE, prompts on stdin; needs the gitignored config.py + some_secrets.py";
+          # Writes: `os.makedirs('data')` and `data/pws.json`, plus the two
+          # gitignored config modules it imports can only exist in a checkout.
+          writes = true;
           text = ''
             missing=""
             for f in some_secrets.py config.py; do
@@ -175,11 +188,13 @@
               echo "  AUTH_URL AUTH_PORT WEBHOOK_URL WEBHOOK_PORT TEST" >&2
               exit 1
             fi
-            # cd, unlike every other command in this map, because main.py hardcodes
-            # relative paths -- `os.makedirs('data')`, `open('data/pws.json')`. Run
-            # it from anywhere else and it silently forks a second state directory
-            # under the caller's cwd.
-            cd "$REPO_ROOT"
+            # No cd of its own any more -- cdPreamble already put us in
+            # $REPO_ROOT, and the guard above already established that
+            # $REPO_ROOT is a real checkout rather than the read-only snapshot.
+            # This verb is the reason that machinery is not optional: main.py
+            # hardcodes relative paths (`os.makedirs('data')`,
+            # `open('data/pws.json')`), so started from anywhere else it
+            # silently forks a second state directory under the caller's cwd.
             exec python main.py "$@"
           '';
         };
@@ -189,12 +204,30 @@
           # them F401 unused-import) and therefore exits 1 -- that is the code,
           # not the flake. Do not add --exit-zero or a permissive config to make
           # it green; either fix the findings or leave the signal honest.
+          #
+          # An explicit default target, never a bare `"$@"`: ruff with no path
+          # argument means `.`, and `.` used to be the CALLER's directory, so
+          # `nix run /path/to/repo#lint` from anywhere else printed "All checks
+          # passed!" after inspecting zero files. `.` is safe to write here only
+          # because cdPreamble has already made it $REPO_ROOT, and it keeps
+          # ruff's diagnostics repo-relative, so the output is byte-identical no
+          # matter which anchor was used. Explicit arguments still win.
+          #
+          # --no-cache because the anchor is sometimes the read-only store
+          # snapshot, where writing `.ruff_cache/` cannot work -- and nine files
+          # re-parse in well under a second, so there is nothing to save.
           description = "ruff check";
-          text = ''ruff check "$@"'';
+          text = ''ruff check --no-cache "''${@:-.}"'';
         };
         fmt = {
+          # MUTATING -- this is the verb that, before the anchor existed,
+          # reformatted whatever Python happened to be sitting in the directory
+          # `nix run <url>#fmt` was called from. `writes` makes it refuse
+          # outright when there is no checkout to act on; otherwise identical
+          # argument handling to lint.
           description = "ruff format (rewrites files)";
-          text = ''ruff format "$@"'';
+          writes = true;
+          text = ''ruff format --no-cache "''${@:-.}"'';
         };
       };
 
@@ -212,13 +245,108 @@
           export LD_LIBRARY_PATH="${lib.makeLibraryPath (nativeLibs pkgs)}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
         '';
 
-      # Every command gets $REPO_ROOT. `nix run` and `nix develop` both start in
-      # whatever directory they were invoked from, so a bare `data/` silently
-      # forks a second environment as soon as an agent works from a subdirectory.
-      # Note we do NOT cd there: commands act on the caller's cwd on purpose.
+      # Every command gets $REPO_ROOT, and it names THIS repo regardless of where
+      # the caller stood. That is not cosmetic. The previous version ended in
+      # `|| pwd`, and every verb then acted on whatever directory it was invoked
+      # from: `nix run /path/to/repo#lint` from an unrelated place printed "All
+      # checks passed!" and exited 0 by inspecting zero files, while the same
+      # command inside the repo exits 1 on 104 real findings -- and `nix run
+      # /path/to/repo#fmt` REWROTE the caller's Python. The flake-URL form is
+      # exactly what CI and a cold agent use, so that was the common path.
+      #
+      # `nix run <flake-url>#verb` hands the wrapper no clue where <flake-url>
+      # lives: nix exports nothing for it, and pure evaluation cannot capture a
+      # caller's path either. So there are exactly two anchors a wrapper can
+      # name at runtime, and both are used here:
+      #
+      #   1. the git work tree the caller happens to be standing in -- accepted
+      #      ONLY once it is confirmed to be a checkout of this repo. The test is
+      #      that every entry at the root of this flake's own source snapshot is
+      #      present there, which some other project or a scratch directory
+      #      cannot fake, while a second clone of THIS repo passes and is then
+      #      operated on -- which is the right answer, since that is the tree the
+      #      caller is actually working in. The name list comes from readDir on
+      #      the snapshot, so this stays generic: there is no per-repo marker
+      #      list to drift out of date.
+      #   2. `${self}`, the read-only store snapshot of the tracked source, when
+      #      the caller is nowhere near a checkout. Read-only verbs are then
+      #      still fully honest -- `nix run github:owner/repo#lint` reports the
+      #      real 104 findings of that revision with no clone at all -- and the
+      #      verbs that WRITE refuse instead (see workTreeGuard).
+      #
+      # Never `pwd`. A verb that silently falls back to the caller's cwd is a
+      # verb that reads and writes files this repo does not own.
+      #
+      # Cost, stated plainly: interpolating `${self}` makes every wrapper depend
+      # on the source snapshot, so editing a .py file rebuilds three sub-second
+      # shell derivations. A rebuild is cheaper than a false green.
       rootPreamble = ''
-        REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
-        export REPO_ROOT
+        REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+        # Guarded: with REPO_ROOT empty, "$REPO_ROOT/$entry" would test /$entry
+        # and could match a real path under /.
+        if [ -n "$REPO_ROOT" ]; then
+          for entry in ${lib.escapeShellArgs (lib.attrNames (builtins.readDir self))}; do
+            [ -e "$REPO_ROOT/$entry" ] || {
+              REPO_ROOT=""
+              break
+            }
+          done
+        fi
+        if [ -n "$REPO_ROOT" ]; then
+          REPO_ROOT_IS_WORKTREE=1
+        else
+          REPO_ROOT="${self}"
+          REPO_ROOT_IS_WORKTREE=0
+        fi
+        export REPO_ROOT REPO_ROOT_IS_WORKTREE
+      '';
+
+      # The other half of the anchor, for the verbs the command map marks
+      # `writes = true`. The snapshot fallback is a /nix/store path: mutating
+      # verbs pointed at it either die halfway through with "Permission denied"
+      # or, like `run`, go looking for gitignored files that by definition were
+      # never in it. Both surface as a diagnostic about a store path the caller
+      # never typed, so refuse up front and say what to do instead.
+      #
+      # This is deliberately unconditional rather than "only when no argument
+      # was given". A mutating verb outside a checkout has no target this repo
+      # owns, and there is no path argument that changes that -- a flake cannot
+      # learn the directory `nix run` resolved it from, so `#fmt -- /some/clone`
+      # would just be the caller re-typing what they could have cd'd into.
+      workTreeGuard = name: ''
+        if [ "$REPO_ROOT_IS_WORKTREE" != 1 ]; then
+          echo "dev-${name}: no checkout of this repo found -- $PWD is not inside one." >&2
+          echo "dev-${name} writes files, and the only other anchor is the read-only" >&2
+          echo "source snapshot, so there is nothing safe to act on. cd into a clone" >&2
+          echo "first (or use 'nix develop /path/to/clone' from inside it)." >&2
+          exit 1
+        fi
+      '';
+
+      # Third and last part of the anchor: every wrapper RUNS in $REPO_ROOT.
+      # Passing the anchor as a path argument is not enough on its own, because
+      # the tools read the process cwd behind your back. Two measured examples
+      # from ruff, both with an absolute target path:
+      #
+      #   * `.ruff_cache/` is created in $PWD, not beside the files inspected --
+      #     so `cd /tmp/empty && ruff check /abs/repo` litters /tmp/empty.
+      #   * config discovery and the isort `src` root start at $PWD. A stray
+      #     ruff.toml (or pyproject.toml) in the caller's directory reduced this
+      #     repo's 104 findings to 68, and first-party imports were misclassified
+      #     as third-party, which silently dropped an I001 in vote.py.
+      #
+      # cwd is the one input every tool shares, so normalise it once here instead
+      # of hunting for a per-tool flag that overrides each symptom. The cost,
+      # stated so nobody trips over it: a RELATIVE path argument is resolved
+      # against the repo root, not the caller's directory. That is the intended
+      # reading -- the repo is the only tree these verbs may touch -- and an
+      # absolute path still means exactly what it says.
+      #
+      # Deliberately NOT in rootPreamble: that one also runs in the dev shell's
+      # shellHook, where cd'ing would teleport an interactive user out of the
+      # subdirectory they opened the shell in.
+      cdPreamble = ''
+        cd "$REPO_ROOT"
       '';
 
       # One derivation per command, reused by both `apps` and the dev shell, so
@@ -237,6 +365,8 @@
             text = ''
               ${rootPreamble}
               ${ldPreamble pkgs}
+              ${lib.optionalString (cmd.writes or false) (workTreeGuard name)}
+              ${cdPreamble}
               ${cmd.text}
             '';
           }
