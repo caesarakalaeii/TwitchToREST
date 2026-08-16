@@ -8,3 +8,6 @@ __pycache__/
 *.pyc
 result
 result-*
+
+# the dev-lint / dev-fmt verbs pass --no-cache, but a bare `ruff` run does not
+.ruff_cache/
